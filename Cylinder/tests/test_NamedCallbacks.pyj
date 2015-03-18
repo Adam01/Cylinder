@@ -1,0 +1,34 @@
+import unittest
+
+@external
+class NamedCallbacks:
+    pass
+
+
+class TestNamedCallbacks(unittest.TestCase):
+    def setUp(self):
+        self.a_value = 5
+        self.b_value = "Hello world!"
+        console.log("setup")
+
+    def test_SubscribeNotify(self):
+        func_called = false
+
+        myfunc = def(a,b):
+            self.assertEquals(a, self.a_value)
+            self.assertEquals(b, self.b_value)
+            func_called = true
+
+        otherFunc = def():
+            self.assertTrue(false, "This should not have been called!")
+
+        cb = NamedCallbacks()
+        cb.subscribe("Test", myfunc)
+        cb.subscribe("Nope", otherFunc)
+
+        cb.notify("Test", self.a_value, self.b_value)
+
+        self.assertTrue(func_called)
+
+global.TestNamedCallbacks = TestNamedCallbacks()
+unittest.main()

@@ -1,0 +1,10 @@
+@external
+class Widget:
+    pass
+
+
+class DirectoryView(Widget):
+    def __init__(self):
+        Widget.__init__(self)
+        self.data = null
+

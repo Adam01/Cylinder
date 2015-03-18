@@ -1,0 +1,42 @@
+@external
+class Widget:
+    pass
+
+class TreeView(Widget):
+    def __init__(self, parentWidget, dataSource):
+        Widget.__init__(self, "CommandLine", parentWidget)
+        self.connection = connection
+
+        def setup():
+            console.log("Setting up tree view widget")
+
+            self.$element.fancytree({
+                onCreate: def(node, span):
+                    bindContextMenu(span)
+                ,onClick: def(node, event):
+                    # Close menu on click
+                    #if $(".contextMenu:visible").length > 0:
+                    #    $(".contextMenu").hide()
+                    pass
+                ,persist: true,
+                dnd: {
+                    autoExpandMS: 1000,
+                    onDragStart: def(node):
+                        """ This function MUST be defined to enable dragging for the tree.
+                         *  Return false to cancel dragging of node.
+                        """
+                        console.log("tree.onDragStart(%o)", node)
+                        return true
+                    ,onDrop: def(node, sourceNode, hitMode, ui, draggable):
+                        """ This function MUST be defined to enable dropping of items on
+                         * the tree.
+                        """
+                        console.log("tree.onDrop(%o, %o, %s)", node, sourceNode, hitMode)
+                        sourceNode.move(node, hitMode)
+                }
+            })
+
+        self.subscribe(self.LOADED_HTML, setup.bind(self))
+
+
+

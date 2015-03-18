@@ -1,0 +1,25 @@
+@external
+class Connection:
+    pass
+
+@external
+class ConnectionWidget:
+    pass
+
+@external
+class Frame:
+    pass
+
+@external
+class CommandLineWidget:
+    pass
+
+
+frame = new Frame("body")
+frame.subscribeOnce(frame.LOADED_HTML, def():
+        frame.setWidth("40em")
+    )
+w = new ConnectionWidget(frame, new Connection())
+con = w.getConnection()
+
+w2 = new CommandLineWidget(frame, con)

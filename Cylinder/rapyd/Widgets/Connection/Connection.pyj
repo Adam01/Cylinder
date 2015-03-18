@@ -1,0 +1,41 @@
+@external
+class Widget:
+    pass
+
+
+class ConnectionWidget(Widget):
+    def __init__(self, parentWidget, connection):
+        Widget.__init__(self, "Connection", parentWidget)
+        self.connection = connection
+
+        def setup():
+            console.log("Settig up connection widget")
+            self.$username = self.$element.find("#ConnectionUsername")
+            self.$password = self.$element.find("#ConnectionPassword")
+            self.$address = self.$element.find("#ConnectionAddress")
+            self.$status = self.$element.find("#ConnectionStatus")
+            self.$element.find("#ConnectButton").click(self.onStartConnect.bind(self))
+
+        self.subscribe(self.LOADED_HTML, setup.bind(self))
+        self.connection.subscribe(self.connection.CONNECT, self.onConnectionStatus.bind(self))
+        self.connection.subscribe(self.connection.AUTHENTICATE, self.onAuthStatus.bind(self))
+        self.connection.subscribe(self.connection.DISCONNECT, self.onDisconnect.bind(self))
+
+    def getConnection(self):
+        return self.connection
+
+    def setStatus(self,text):
+        self.$status.text(text)
+
+    def onStartConnect(self, e):
+        self.connection.connect(self.$address.val(), self.$username.val(), self.$password.val())
+        self.setStatus("Connecting...")
+
+    def onConnectionStatus(self, status, address):
+        self.setStatus("Connected to " + address + "...")
+
+    def onAuthStatus(self, address, username):
+        self.setStatus("Authenticated as " + username + "@" + address)
+
+    def onDisconnect(self, address, username):
+        self.setStatus("Lost connection to " + address)

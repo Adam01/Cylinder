@@ -1,0 +1,46 @@
+@external
+class Widget:
+    pass
+
+
+class CommandLineWidget(Widget):
+    def __init__(self, parentWidget, connection):
+        Widget.__init__(self, "CommandLine", parentWidget)
+        self.connection = connection
+
+        def setup():
+            console.log("Setting up command line widget")
+            self.$inputCmd = self.$element.find("#inputCmd")
+            self.$inputArgs = self.$element.find("#inputArgs")
+            self.$output = self.$element.find("#Output")
+            self.$element.find("#SendButton").click(self.onSendCommand.bind(self))
+
+        self.subscribe(self.LOADED_HTML, setup.bind(self))
+        self.connection.subscribeAll(self.onResponse.bind(self))
+
+    def getConnection(self):
+        return self.connection
+
+    def setOutput(self,text):
+        self.$output.text(text)
+
+    def appendOutput(self, text):
+        self.$output.append(text + "\n")
+
+    def prependOutput(self, text):
+        self.$output.prepend(text + "\n")
+
+    def onSendCommand(self, e):
+        cmd = self.$inputCmd.val()
+        args = JSON.parse(self.$inputArgs.val())
+        self.connection.sendCommand( cmd , args )
+        self.prependOutput(cmd + "(" + args + ")")
+
+    def onResponse(self, data):
+        if typeof data == "String":
+            self.prependOutput(data)
+        else:
+            outObj = {"Method": data.method, "Status": data.status, "Result": data.result, "ID": data.id, "Error": data.error}
+            self.prependOutput(JSON.stringify(outObj))
+
+

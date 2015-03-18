@@ -1,0 +1,13 @@
+@external
+class Widget:
+    pass
+
+class Frame(Widget):
+    def __init__(self, targetSelector, append=False):
+        Widget.__init__(self, "Frame")
+        self.subscribe(self.LOADED_HTML, def():
+            if append:
+                self.$element = $(targetSelector).append(self.$element[0].innerHTML)
+            else:
+                self.$element = $(targetSelector).html(self.$element[0].innerHTML).find("div").first()
+        )

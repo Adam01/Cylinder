@@ -1,0 +1,101 @@
+@external
+class NamedCallbacks:
+    pass
+
+def GetWidgetPath(sourceName):
+    return "./js/Widgets/" + sourceName + "/"
+
+LoadedStyleSheets = []
+
+
+def AttachStyleSheet(widgetPathName):
+    if widgetPathName in LoadedStyleSheets:
+        return
+    url = widgetPathName + ".css"
+    $('head').append( $('<link rel="stylesheet" type="text/css" />').attr('href', url) )
+    LoadedStyleSheets.push(widgetPathName)
+
+def LoadMarkup(widget, widgetPathName, onLoaded=null):
+    $.ajax(widgetPathName + ".html", {
+        success: def(data, status, jqxhr):
+
+            def applyMarkup(target):
+                widget.$element = target.append(data)
+                widget.$element.data("WidgetID", widget.WidgetID)
+                if onLoaded:
+                    onLoaded()
+
+            if widget.parent:
+                if widget.parent.$element is None:
+                    parentWidget.subscribe(widget.parent.LOADED_HTML, def():
+                        applyMarkup(widget.parent.$element)
+                    )
+                else:
+                    applyMarkup(widget.parent.$element)
+            else:
+                applyMarkup($("<div></div>"))
+
+    })
+
+
+
+NextWidgetID = 0
+class Widget(NamedCallbacks):
+
+    def __init__(self, sourceName=None, parentWidget=None):
+        NamedCallbacks.__init__(self)
+        nonlocal NextWidgetID
+        self.WidgetID = NextWidgetID
+        NextWidgetID += 1
+
+        self.LOADED_HTML = "OnLoadHTML"
+        self.$element = None
+        self.parent = parentWidget
+
+        onLoadedHTML = self.notify.bind(self, self.LOADED_HTML, self)
+
+        if sourceName is not None:
+            widgetPathName = GetWidgetPath(sourceName) + sourceName
+            LoadMarkup(self, widgetPathName, onLoadedHTML )
+            AttachStyleSheet(widgetPathName)
+        else:
+            setTimeout(onLoadedHTML, 100)
+
+
+
+    def setVisible(self, show):
+        if show:
+            self.$element.show()
+        else:
+            self.$element.hide()
+        return self
+
+    def setEnabled(self, enable):
+        if enable:
+            self.$element.enable()
+        else:
+            self.$element.disable()
+        return self
+
+    def remove(self):
+        self.$element.remove(self)
+
+    def addChildWidget(self, w):
+        self.$element.append(w.$element)
+        return self
+
+    def setStyleProperty(self,name, value):
+        self.$element.css(name, value)
+        return self
+
+    def getStyleProperty(self,name):
+        return self.$element.css(name)
+
+    def setWidth(self,x):
+        return self.setStyleProperty("width", x)
+
+    def setHeight(self,y):
+        return self.setStyleProperty("height", y)
+
+    def getParent(self):
+        return self.parent
