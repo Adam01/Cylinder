@@ -1,0 +1,20 @@
+widgets = ["CommandLine", "Connection", "DirectoryView", "Frame", "TreeView", "DirectoryList", "DirectoryListRow"]
+
+def getJSPaths(names):
+    paths = []
+    for name in names:
+        paths.push("Widgets/" + name + "/" + name  )
+    return paths
+
+paths = getJSPaths(widgets)
+
+define(paths, def(*args):
+    mapping = {}
+    i = 0
+    for name in widgets:
+        mapping[name] = args[i]
+        i += 1
+
+    console.log(mapping)
+    return mapping
+)

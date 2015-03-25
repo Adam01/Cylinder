@@ -1,68 +1,69 @@
 @external
-class SockJS:
-    pass
-
-@external
 class NamedCallbacks:
     pass
 
-class Connection(NamedCallbacks):
+define(["NamedCallbacks"], def(NamedCallbacks):
 
-    def __init__(self):
-        NamedCallbacks.__init__(self)
-        self.nextCallbackID = 0
-        self.socket = null
-        self.username = null
-        self.address = null
+    class Connection(NamedCallbacks):
 
-        # Callbacks - function signature in brackets
-        # Class constants don't seem to be supported in rapydscript
-        self.CONNECT = "OnConnect" # (address)
-        self.DISCONNECT = "OnDisconnect" # (address, username)
-        self.AUTHENTICATE = "OnAuthenticate" # (address, username)
+        def __init__(self):
+            NamedCallbacks.__init__(self)
+            self.nextCallbackID = 0
+            self.socket = null
+            self.username = null
+            self.address = null
+
+            # Callbacks - function signature in brackets
+            # Class constants don't seem to be supported in rapydscript
+            self.CONNECT = "OnConnect" # (address)
+            self.DISCONNECT = "OnDisconnect" # (address, username)
+            self.AUTHENTICATE = "OnAuthenticate" # (address, username)
 
 
 
-    def sendCommand(self, cmd, params={}, callback=null):
-        rpc_obj = {"method": cmd, "params": params}
-        if callback is not null:
-            rpc_obj.callback_id = self.nextCallbackID
-            self.nextCallbackID += 1
-            self.subscribe(rpc_obj.callback_id, callback)
+        def sendCommand(self, cmd, params={}, callback=null):
+            rpc_obj = {"method": cmd, "params": params}
+            if callback is not null:
+                rpc_obj.callback_id = self.nextCallbackID
+                self.nextCallbackID += 1
+                self.subscribe(rpc_obj.callback_id, callback)
 
-        json_data = JSON.stringify(rpc_obj)
-        self.socket.send(json_data)
+            json_data = JSON.stringify(rpc_obj)
+            self.socket.send(json_data)
 
-    def onAuthenticate(self):
-        self.notify(self.AUTHENTICATE, self.address, self.username)
-        self.socket.onmessage = def(e):
-            json_data = JSON.parse(e.data)
-            self.onData(json_data)
+        def onAuthenticate(self):
+            self.notify(self.AUTHENTICATE, self.address, self.username)
+            self.socket.onmessage = def(e):
+                json_data = JSON.parse(e.data)
+                self.onData(json_data)
 
-        self.socket.onclose = def():
-            self.notify(self.DISCONNECT, self.address, self.username)
+            self.socket.onclose = def():
+                self.notify(self.DISCONNECT, self.address, self.username)
 
-    def onLoginReply(self, message):
-        data = JSON.parse(message.data)
-        if data.result == true:
-            self.onAuthenticate()
-        else:
-            console.log("Unsuccessful authentication")
+        def onLoginReply(self, message):
+            data = JSON.parse(message.data)
+            if data.result == true:
+                self.onAuthenticate()
+            else:
+                console.log("Unsuccessful authentication")
 
-    def onData(self, data):
-        name = data.callback_id or data.method
-        self.notify(name, data)
+        def onData(self, data):
+            name = data.callback_id or data.method
+            self.notify(name, data)
 
-    def connect(self, address, username, password):
-        self.socket = SockJS(address)
-        self.address = address
-        self.username = username
-        self.socket.onopen = def():
-            self.notify(self.CONNECT, address)
-            self.sendCommand("login", {"username": username, "password": password}, self.onLoginReply)
+        def connect(self, address, username, password):
+            self.socket = SockJS(address)
+            self.address = address
+            self.username = username
+            self.socket.onopen = def():
+                self.notify(self.CONNECT, address)
+                self.sendCommand("login", {"username": username, "password": password}, self.onLoginReply)
 
-        self.socket.onclose = def():
-            self.notify(self.DISCONNECT, address)
+            self.socket.onclose = def():
+                self.notify(self.DISCONNECT, address)
 
-        self.socket.onmessage = self.onLoginReply.bind(self)
+            self.socket.onmessage = self.onLoginReply.bind(self)
 
+
+    return Connection
+)

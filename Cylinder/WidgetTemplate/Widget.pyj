@@ -1,0 +1,17 @@
+@external
+class Widget:
+    pass
+
+define(["Widget"], main)
+
+def main(Widget):
+    class WidgetName(Widget):
+        def __init__(self, parentWidget):
+            Widget.__init__(self, "WidgetName", parentWidget)
+
+            def setup():
+                pass
+
+            self.subscribe(self.LOADED_HTML, setup.bind(self))
+
+    return WidgetName

@@ -5,7 +5,7 @@ import clean_js
 
 script_list = list()
 
-main_script = os.path.abspath( os.path.join("rapyd", "main.pyj") )
+main_script = os.path.abspath( os.path.join("rapyd", "Cylinder.pyj") )
 
 for root, dirs, files in os.walk("rapyd"):
     path = root.split(os.sep)

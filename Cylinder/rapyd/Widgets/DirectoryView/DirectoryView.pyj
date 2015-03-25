@@ -2,9 +2,23 @@
 class Widget:
     pass
 
+@external
+class FileSystemSource:
+    pass
 
-class DirectoryView(Widget):
-    def __init__(self):
-        Widget.__init__(self)
-        self.data = null
+define(["Widget", "FileSystemSource"], def(Widget, FileSystemSource):
 
+    class DirectoryView(Widget):
+        def __init__(self, source):
+            Widget.__init__(self)
+            self.data = null
+            self.source = source
+
+            def setup():
+                pass
+
+            self.subscribeOnce(self.LOADED_HTML, setup)
+
+
+    return DirectoryView
+)

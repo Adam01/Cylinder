@@ -6,140 +6,94 @@
 class NamedCallbacks:
     pass
 
-module PathUtil:
-    def explode(path, processSpecial):
-        pathArr = path.split("/")
-        pathClean = []
-        for data in pathArr:
-            if data.length:
-                if processSpecial:
-                    if data == ".":  continue
-                    if data == "..":
-                        pathClean.pop()
-                        continue
-                pathClean.push(data)
-        return pathClean
+define(["NamedCallbacks"], def(NamedCallbacks):
 
-    def join(*args):
-        joinedArgs = []
-        for data in args:
-            if data instanceof Object: data = data.path
-            if data.lastIndexOf("/",0) == 0:
-                joinedArgs = []
+    class FileSystemSource(NamedCallbacks):
+        def __init__(self, connection):
+            NamedCallbacks.__init__(self)
+            self.connection = connection
+            self.CMD_LISTDIR = "list_dir"
 
-            joinedArgs.push.apply( joinedArgs, self.explode( data, false) )
-        return joinedArgs
+            #self.rootNode = EntityNode(None, "~", "d")
 
+            self.connection.subscribe(self.CMD_LISTDIR, self.onDirectoryListing.bind(self, None))
 
-class Path:
-    def __init__(self, path):
-        self.path = path
+        def getConnection(self):
+            return self.connection
 
-    def explode(self, processSpecial):
-        return PathUtil.explode(self.path, processSpecial)
+        def onDirectoryListing(self, cb, response):
+            if response.status != "Completed" or response.result is False:
+                console.log("Unable to get directory listing: ", response)
+            else:
+                path = response.data.path
+                list = response.data.list
+                console.log("Got directory listing for " + path)
+                if cb:
+                    cb(path, list)
 
-    def abs(self):
-        return "/" + self.explode(true).join("/")
+        def fetchDirectory(self, path, cb=None):
+            self.connection.sendCommand(self.CMD_LISTDIR, {path: path}, self.onDirectoryListing.bind(self,cb))
 
-    def join(self, *args):
-        args.unshift(self.path)
-        self.path = PathUtil.join.apply(this, args).join("/")
-        return self
+    return FileSystemSource
+)
 
-    def getName(self):
-        return self.explode().pop()
+"""
 
-    def getParentName(self):
-        return self.join("..")
+    class EntityNode:
+        def __init__(self, parentNode, name, type):
+            self.parentNode = parentNode
+            self.name = name
+            self.children = []
+            self.type = type
 
-    def clone(self):
-        return new Path(self.path);
+        def getName(self):
+            return self.name
 
+        def getParentNode(self):
+            return self.parentNode
 
-class EntityNode:
-    def __init__(self, parentNode, name, type):
-        self.parentNode = parentNode
-        self.name = name
-        self.children = []
-        self.type = type
+        def getChildren(self):
+            return self.children
 
-    def getName(self):
-        return self.name
+        def getType(self):
+            return self.type
 
-    def getParentNode(self):
-        return self.parentNode
+        def getChildNode(self, name):
+            for node in self.children:
+                if node.name == name:
+                    return node
+            return None
 
-    def getChildren(self):
-        return self.children
+        def generateParts(self):
+            parentParts = []
+            if not self.isRoot():
+                parentParts.push( self.parentNode.generateParts() )
+            parentParts.push(self.name)
+            return parentParts
 
-    def getType(self):
-        return self.type
+        def isRoot(self):
+            return self.parentNode is None
 
-    def getChildNode(self, name):
-        for node in self.children:
-            if node.name == name:
-                return node
-        return None
+        def getRootNode(self):
+            if self.isRoot():
+                return self
+            return self.parentNode.getRootNode()
 
-    def generateParts(self):
-        parentParts = []
-        if not self.isRoot():
-            parentParts.push( self.parentNode.generateParts() )
-        parentParts.push(self.name)
-        return parentParts
+        def findNode(self, parts, create=false):
+            name = parts[0]
+            if name == self.name:
+                return self
+            childNode = self.getChildNode(name)
+            if childNode is not None:
+                parts.shift()
+                return childNode.findNode(parts)
+            elif create:
+                root = self
+                while parts.length > 0:
+                    name = parts.shift()
+                    root.children.push( EntityNode(root, name,"d") )
+                    root = root.children[root.children.length]
+                return root
+            return None
 
-    def isRoot(self):
-        return self.parentNode is None
-
-    def getRootNode(self):
-        if self.isRoot():
-            return self
-        return self.parentNode.getRootNode()
-
-    def findNode(self, parts, create=false):
-        name = parts[0]
-        if name == self.name:
-            return self
-        childNode = self.getChildNode(name)
-        if childNode is not None:
-            parts.shift()
-            return childNode.findNode(parts)
-        elif create:
-            root = self
-            while parts.length > 0:
-                name = parts.shift()
-                root.children.push( EntityNode(root, name,"d") )
-                root = root.children[root.children.length]
-            return root
-        return None
-
-#TODO decide on transfer format
-
-class FileSystemSource(NamedCallbacks):
-    def __init__(self, connection):
-        self.connection = connection
-        self.UPDATED = "OnDataUpdate"
-        self.REFRESH = "OnRefresh"
-        self.CMD_LISTDIR = "list_dir"
-
-        self.rootNode = EntityNode(None, "~", "d")
-
-        self.connection.subscribe(self.CMD_LISTDIR, self.onDirectoryListing.bind(self))
-
-    def onDirectoryListing(self, data):
-        path = data.result.path
-        console.log("Got directory list for " + path)
-        nodePath = self.rootNode.findNode(path, true)
-        listing = data.result.list
-
-        self.notify(self.UPDATED, data.path)
-
-    def fetchDirectory(self, path, cb=None):
-        if cb is not None:
-            this_cb = def(data):
-                cb(data)
-                self.onDirectoryListing(data)
-
-
-        self.connection.sendCommand(self.CMD_LISTDIR, {path: path}, this_cb)
-
+"""

@@ -1,0 +1,45 @@
+@external
+class Connection:
+    pass
+
+@external
+class FileSystemSource:
+    pass
+
+@external
+module Widgets:
+    @external
+    class Connection:
+        pass
+    @external
+    class CommandLine:
+        pass
+    @external
+    class TreeView:
+        pass
+    @external
+    class Frame:
+        pass
+    @external
+    class DirectoryList:
+        pass
+
+
+require.config({
+    baseUrl: "./js"
+})
+
+require( ["Widgets", "Connection", "FileSystemSource"], main)
+
+def main(Widgets, Connection, FileSystemSource):
+
+    frame = Widgets.Frame("body")
+    frame.subscribeOnce(frame.LOADED_HTML, def():
+            frame.setWidth("40em")
+        )
+    connection = Connection()
+    Widgets.Connection(frame, connection)
+    Widgets.CommandLine(frame, connection)
+    fs = FileSystemSource(connection)
+    Widgets.DirectoryList(frame, fs)
+    #Widgets.TreeView(frame, fs )

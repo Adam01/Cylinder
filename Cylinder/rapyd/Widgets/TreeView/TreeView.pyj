@@ -2,41 +2,77 @@
 class Widget:
     pass
 
-class TreeView(Widget):
-    def __init__(self, parentWidget, dataSource):
-        Widget.__init__(self, "CommandLine", parentWidget)
-        self.connection = connection
+define(["Widget", "PathUtil"], main)
 
-        def setup():
-            console.log("Setting up tree view widget")
+def main (Widget, PathUtil):
 
-            self.$element.fancytree({
-                onCreate: def(node, span):
-                    bindContextMenu(span)
-                ,onClick: def(node, event):
-                    # Close menu on click
-                    #if $(".contextMenu:visible").length > 0:
-                    #    $(".contextMenu").hide()
-                    pass
-                ,persist: true,
-                dnd: {
-                    autoExpandMS: 1000,
-                    onDragStart: def(node):
-                        """ This function MUST be defined to enable dragging for the tree.
-                         *  Return false to cancel dragging of node.
-                        """
-                        console.log("tree.onDragStart(%o)", node)
-                        return true
-                    ,onDrop: def(node, sourceNode, hitMode, ui, draggable):
-                        """ This function MUST be defined to enable dropping of items on
-                         * the tree.
-                        """
-                        console.log("tree.onDrop(%o, %o, %s)", node, sourceNode, hitMode)
-                        sourceNode.move(node, hitMode)
-                }
-            })
+    class TreeView(Widget):
+        def __init__(self, parentWidget, datasource):
+            Widget.__init__(self, "TreeView", parentWidget)
 
-        self.subscribe(self.LOADED_HTML, setup.bind(self))
+            self.UPDATE = "OnUpdate"
+
+            self.fs = datasource
+            self.fancytree = None
+            self.path = None
+            self.list = []
+
+            def setup():
+                self.$element.fancytree()
+                self.fancytree = self.$element.fancytree("getTree")
+                self.setVisible(True)
 
 
+            self.subscribe(self.LOADED_HTML, setup.bind(self))
+            self.fs.getConnection().subscribeOnce(self.fs.getConnection().AUTHENTICATE, self.fetchDir.bind(self,"~"))
 
+        def setVisible(self, v):
+            if v:
+                self.$element.find("ul").removeClass("ui-helper-hidden")
+            else:
+                self.$element.find("ul").addClass("ui-helper-hidden")
+
+        def fetchDir(self, path):
+            self.fs.fetchDirectory(path, self.onListDir.bind(self))
+
+        def getPath(self):
+            return self.path
+
+        def getList(self):
+            return self.list
+
+        def update(self):
+            self.fancytree.reload(self.toFancyTreeNode(self.path,self.list,True))
+            self.notify(self.UPDATE)
+
+        def onListDir(self, path, list):
+            self.path = path
+            self.list = list
+            self.update()
+
+
+        def toFancyTreeNode(self, path, list, expandToList=False):
+            preNodes = PathUtil.explode(path)
+            source = [{}]
+
+            currentNode = {children: source}
+            for node in preNodes:
+                currentNode = currentNode.children[0]
+                currentNode.title = node
+                currentNode.folder = True
+                currentNode.expanded = expandToList
+                currentNode.children = [{}]
+
+
+            for entity in list:
+                node = {}
+                node.title = entity.title
+                node.data = {}
+                node.data.type = entity.type
+                node.data.owner = entity.owner
+                node.folder = entity.type == "directory" ? True : False
+                currentNode.children.push(node)
+
+            return source
+
+    return TreeView

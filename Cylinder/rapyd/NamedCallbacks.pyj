@@ -1,62 +1,67 @@
-class NamedCallbacks:
-    def __init__(self):
-        self.callbacks = {}
-        self.globalCallbacks = []
+define(def():
 
-    def addGlobalCallbacks(self, obj):
-        for fn in self.globalCallbacks:
-            obj.add(fn)
+    class NamedCallbacks:
+        def __init__(self):
+            self.callbacks = {}
+            self.globalCallbacks = []
 
-    def subscribe(self, name, fn):
-        if name not in self.callbacks:
-            self.callbacks[name] = $.Callbacks()
-        self.callbacks[name].add(fn)
-        self.addGlobalCallbacks(self.callbacks[name])
-
-    def subscribeOnce(self, name, fn):
-        if name not in self.callbacks:
-            self.callbacks[name] = $.Callbacks()
-
-        nfn = None
-        nfn = def(*args):
-            fn(*args)
-            self.callbacks[name].remove(nfn)
-
-        self.callbacks[name].add(nfn)
-        self.addGlobalCallbacks(self.callbacks[name])
-
-    def subscribeAll(self, fn):
-        self.globalCallbacks.push(fn)
-        for name in self.callbacks:
-            self.callbacks[name].add(fn)
-
-    def notify(self, name, *args):
-        if name not in self.callbacks:
+        def addGlobalCallbacks(self, obj):
             for fn in self.globalCallbacks:
-                fn.apply(this, args )
-            return
-        self.callbacks[name].fire.apply(this, args )
+                obj.add(fn)
 
-    def notifyAll(self, *args):
-        for name in self.callbacks:
-            self.notify.apply(this, args[1:])
+        def subscribe(self, name, fn):
+            if name not in self.callbacks:
+                self.callbacks[name] = $.Callbacks()
+            self.callbacks[name].add(fn)
+            self.addGlobalCallbacks(self.callbacks[name])
 
-    def removeFunction(self, fn):
-        for name in self.callbacks:
-            callbacks[name].remove(fn)
-        globalIndex = self.globalCallbacks.indexOf(fn)
-        if globalIndex != -1:
-            self.globalCallbacks.split(globalIndex,1)
+        def subscribeOnce(self, name, fn):
+            if name not in self.callbacks:
+                self.callbacks[name] = $.Callbacks()
 
-    def removeNameFunction(self, name, fn):
-        if name in self.callbacks:
-            callbacks[name].remove(fn)
+            nfn = None
+            nfn = def(*args):
+                fn(*args)
+                self.callbacks[name].remove(nfn)
 
-    def removeName(self, name):
-        if name in self.callbacks:
-            del self.callbacks[name]
+            self.callbacks[name].add(nfn)
+            self.addGlobalCallbacks(self.callbacks[name])
 
-    def removeAll(self):
-        for name in self.callbacks:
-            del self.callbacks[name]
-        self.globalCallbacks = []
+        def subscribeAll(self, fn):
+            self.globalCallbacks.push(fn)
+            for name in self.callbacks:
+                self.callbacks[name].add(fn)
+
+        def notify(self, name, *args):
+            if name not in self.callbacks:
+                for fn in self.globalCallbacks:
+                    fn.apply(this, args )
+                return
+            self.callbacks[name].fire.apply(this, args )
+
+        def notifyAll(self, *args):
+            for name in self.callbacks:
+                self.notify.apply(this, args[1:])
+
+        def removeFunction(self, fn):
+            for name in self.callbacks:
+                callbacks[name].remove(fn)
+            globalIndex = self.globalCallbacks.indexOf(fn)
+            if globalIndex != -1:
+                self.globalCallbacks.split(globalIndex,1)
+
+        def removeNameFunction(self, name, fn):
+            if name in self.callbacks:
+                callbacks[name].remove(fn)
+
+        def removeName(self, name):
+            if name in self.callbacks:
+                del self.callbacks[name]
+
+        def removeAll(self):
+            for name in self.callbacks:
+                del self.callbacks[name]
+            self.globalCallbacks = []
+
+    return NamedCallbacks
+)

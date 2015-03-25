@@ -1,0 +1,49 @@
+define( def():
+    def explode(path, processSpecial):
+        pathArr = path.split("/")
+        pathClean = []
+        for data in pathArr:
+            if data.length:
+                if processSpecial:
+                    if data == ".":  continue
+                    if data == "..": continue
+                pathClean.push(data)
+        return pathClean
+
+    def join(*args):
+        joinedArgs = []
+        for data in args:
+            if data instanceof Object: data = data.path
+            if data.lastIndexOf("/",0) == 0:
+                joinedArgs = []
+
+            joinedArgs.push.apply( joinedArgs, self.explode( data, false) )
+        return joinedArgs
+
+
+    class Path:
+        def __init__(self, path):
+            self.path = path
+
+        def explode(self, processSpecial):
+            return PathUtil.explode(self.path, processSpecial)
+
+        def abs(self):
+            return "/" + self.explode(true).join("/")
+
+        def join(self, *args):
+            args.unshift(self.path)
+            self.path = PathUtil.join.apply(this, args).join("/")
+            return self
+
+        def getName(self):
+            return self.explode().pop()
+
+        def getParentName(self):
+            return self.join("..")
+
+        def clone(self):
+            return new Path(self.path);
+
+    return {"Path": Path, "explode": explode, "join": join}
+)
