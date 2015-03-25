@@ -1,0 +1,19 @@
+.FileEntity {
+  background-color: inherit;
+}
+.DirectoryEntity {
+  background-color: khaki;
+}
+.DirectoryListHeaderCell {
+  text-transform: capitalize;
+}
+
+.FileEntity, .DirectoryEntity {
+  &:hover {
+    background-color: azure;
+  }
+  .active {
+    background-color: green;
+  }
+}
+

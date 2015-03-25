@@ -1,0 +1,93 @@
+@external
+class Widget:
+    pass
+
+@external
+class DirectoryListRow:
+    pass
+
+
+define(["Widget","Widgets/DirectoryListRow/DirectoryListRow"], main)
+
+def main(Widget, DirectoryListRow):
+
+    class DirectoryList(Widget):
+        def __init__(self, parentWidget, fs):
+            Widget.__init__(self, "DirectoryList", parentWidget)
+
+            self.fs = fs
+            self.path = None
+            self.data = None
+            self.columnFields = ["title", "size", "owner", "modified"]
+            self.rows = []
+
+            def setup():
+
+                pass
+
+            self.subscribe(self.LOADED_HTML, setup.bind(self))
+            con = self.fs.getConnection()
+            con.subscribe(con.AUTHENTICATE, self.fetchDir.bind(self,"~"))
+
+        def fetchDir(self, path):
+            self.fs.fetchDirectory(path, self.onListDir.bind(self))
+
+        def getPath(self):
+            return self.path
+
+        def getList(self):
+            return self.list
+
+        def onRowDblClick(self, row, ev):
+            if row.data.type == "directory":
+                self.fetchDir(row.data.path)
+
+        def clear(self):
+
+            $head = self.$element.find(".DirectoryListHeaderRow")
+            $head.find(".DirectoryListHeaderCell").remove()
+
+            for row in self.rows:
+                row.remove()
+
+            self.rows = []
+
+        def onListDir(self, path, list):
+            self.path = path
+            self.list = list
+            self.update()
+
+        def addItem(self, item):
+            row = DirectoryListRow(self, item)
+            row.subscribe(row.DBL_CLICKED, self.onRowDblClick.bind(self) )
+            self.rows.push(row)
+
+        def update(self):
+            self.clear()
+            $head = self.$element.find(".DirectoryListHeaderRow")
+
+            parentDirectory = {}
+
+            for column in self.columnFields:
+                $cell = $("<th class='DirectoryListHeaderCell'></th>")
+                $cell.text(column)
+                $head.append($cell)
+                parentDirectory[column] = ""
+
+
+            parentDirectory.title = ".."
+            parentDirectory.type = "directory"
+            parentDirectory.path = self.path + "/.."
+            self.addItem(parentDirectory)
+
+            for item in self.list:
+                self.addItem(item)
+
+
+
+
+
+
+
+
+    return DirectoryList

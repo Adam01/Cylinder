@@ -1,0 +1,31 @@
+@external
+class Widget:
+    pass
+
+define(["Widget"], main)
+
+def main(Widget):
+    class DirectoryListRow(Widget):
+        def __init__(self, parentWidget, item):
+            Widget.__init__(self, "DirectoryListRow", parentWidget, ".DirectoryListBody")
+
+            self.DBL_CLICKED = "OnDoubleClick"
+            self.CLICKED = "OnClick"
+
+            self.data = item
+
+            def setup():
+                self.$element.addClass( self.data.type + "Entity")
+                self.$element.dblclick(self.notify.bind(self, self.DBL_CLICKED, self))
+                self.$element.click(self.notify.bind(self, self.CLICKED, self))
+
+                for column in self.parent.columnFields:
+                    $cell = $("<td class='DirectoryListCell'></td>")
+                    $cell.text( item[column] )
+                    self.$element.append($cell)
+
+
+            self.subscribe(self.LOADED_HTML, setup.bind(self))
+
+
+    return DirectoryListRow
