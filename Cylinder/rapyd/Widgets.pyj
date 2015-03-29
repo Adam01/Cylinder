@@ -15,6 +15,5 @@ define(paths, def(*args):
         mapping[name] = args[i]
         i += 1
 
-    console.log(mapping)
     return mapping
 )

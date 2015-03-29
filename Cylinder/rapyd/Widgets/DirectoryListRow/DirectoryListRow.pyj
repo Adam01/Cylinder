@@ -20,8 +20,8 @@ def main(Widget):
                 self.$element.click(self.notify.bind(self, self.CLICKED, self))
 
                 for column in self.parent.columnFields:
-                    $cell = $("<td class='DirectoryListCell'></td>")
-                    $cell.text( item[column] )
+                    $cell = $("<td class='DirectoryListCell'><div></div></td>")
+                    $cell.find("div").text( item[column] )
                     self.$element.append($cell)
 
 

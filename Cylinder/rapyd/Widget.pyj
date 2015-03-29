@@ -60,7 +60,9 @@ define(["NamedCallbacks"], def(NamedCallbacks):
         @staticmethod
         def getWidgetByID(id):
             nonlocal Widgets
-            return Widgets[id]
+            if id in Widgets:
+                return Widgets[id]
+            return None
 
         def __init__(self, sourceName, parentWidget, appendToSelector=None):
             NamedCallbacks.__init__(self)
@@ -73,6 +75,8 @@ define(["NamedCallbacks"], def(NamedCallbacks):
             NextWidgetID += 1
 
             self.LOADED_HTML = "OnLoadHTML"
+            self.RESIZED = "OnResize"
+
             self.$element = None
             self.parent = parentWidget
 

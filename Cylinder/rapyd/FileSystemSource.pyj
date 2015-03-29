@@ -13,6 +13,7 @@ define(["NamedCallbacks"], def(NamedCallbacks):
             NamedCallbacks.__init__(self)
             self.connection = connection
             self.CMD_LISTDIR = "list_dir"
+            self.CMD_GETPATHSEP = "get_path_separator"
 
             #self.rootNode = EntityNode(None, "~", "d")
 
@@ -20,6 +21,15 @@ define(["NamedCallbacks"], def(NamedCallbacks):
 
         def getConnection(self):
             return self.connection
+
+        def onPathSep(self, cb, response):
+            if response.status != "Completed" or response.result is False:
+                console.log("Unable to get path separator: ", response)
+            else:
+                cb(response.data)
+
+        def getPathSeparator(self,cb):
+            self.connection.sendCommand(self.CMD_GETPATHSEP, {}, self.onPathSep.bind(self, cb))
 
         def onDirectoryListing(self, cb, response):
             if response.status != "Completed" or response.result is False:

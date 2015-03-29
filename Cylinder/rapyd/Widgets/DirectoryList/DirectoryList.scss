@@ -17,3 +17,21 @@
   }
 }
 
+.DirectoryList{
+  overflow-y: scroll;
+  height: 30em;
+}
+
+.DirectoryListCell div {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.DirectoryListTable {
+  width: 100%;
+}
+
+.DirectoryListHeaderCell:first-child {
+  width: 60%;
+}

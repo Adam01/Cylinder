@@ -11,20 +11,102 @@ def main (Widget, PathUtil):
             Widget.__init__(self, "TreeView", parentWidget)
 
             self.UPDATE = "OnUpdate"
+            self.ITEM_EXPANDED = "OnItemExpand"
+            self.ITEM_CLICKED = "OnItemClick"
 
             self.fs = datasource
             self.fancytree = None
-            self.path = None
-            self.list = []
+            self.data = None
+            self.collapse_inactive = True
 
             def setup():
-                self.$element.fancytree()
+                self.$element.fancytree({
+                    expand: self.onItemExpand.bind(self),
+                    click: self.onItemClick.bind(self),
+                    lazyLoad: def(e,d):
+                        d.result = []
+                })
                 self.fancytree = self.$element.fancytree("getTree")
                 self.setVisible(True)
 
 
             self.subscribe(self.LOADED_HTML, setup.bind(self))
-            self.fs.getConnection().subscribeOnce(self.fs.getConnection().AUTHENTICATE, self.fetchDir.bind(self,"~"))
+
+
+        def onItemClick(self, ev, data):
+            if data.targetType == "title":
+                self.notify(self.ITEM_CLICKED, data.node)
+
+        def fetchNodeContents(self, node):
+            self.fs.fetchDirectory(node.data.path, self.onListNodeDir.bind(self, node))
+
+        def findInNodeList(self, list, key):
+            for node in list:
+                if node.key == key:
+                    return node
+            return None
+
+        def collapseChildren(self, node, not_ancestor_of=None):
+            children = node.getChildren()
+            if children:
+                for child in children:
+                    if child.isExpanded():
+                        if not not_ancestor_of or ( not not_ancestor_of.isDescendantOf(child) and not_ancestor_of != child ):
+                            child.setExpanded(False)
+
+        def collapseTop(self, not_ancestor_of=None):
+            node = self.fancytree.getFirstChild()
+            if node:
+                self.collapseChildren(node, not_ancestor_of)
+
+
+        def expandAncestors(self, node, collapseSiblings=True):
+            parents = node.getParentList(True)
+            if parents:
+                for p in parents:
+                    if not p.isExpanded():
+                        p.setExpanded(True)
+                    if collapseSiblings:
+                        self.collapseChildren(p, node)
+
+
+
+
+        def activatePath(self, path):
+            targetNode = self.fancytree.getNodeByKey(path)
+            if targetNode is not None:
+                if self.collapse_inactive:
+                    self.collapseTop(targetNode)
+                targetNode.setActive(True)
+                self.expandAncestors(targetNode, self.collapse_inactive)
+                self.fetchNodeContents(targetNode)
+                self.collapseChildren(targetNode)
+
+
+        def onListNodeDir(self, targetNode, path, list):
+            newChildren = self.toFancyTreeList(list)
+
+            if targetNode is not None:
+                currentChildren = targetNode.getChildren()
+                if currentChildren:
+                    for child in currentChildren:
+                        if self.findInNodeList(newChildren, child.key) is None:
+                            targetNode.removeChild(child)
+
+                    for child in newChildren:
+                        if self.findInNodeList(currentChildren, child.key) is None:
+                            targetNode.addNode(child)
+                else:
+                    targetNode.addChildren(newChildren)
+
+                if not targetNode.isExpanded(True):
+                    targetNode.setExpanded(True)
+
+
+        def onItemExpand(self, ev, data):
+            if data.node.isFolder():
+                self.fetchNodeContents(data.node)
+            self.notify(self.ITEM_EXPANDED, data.node.data)
 
         def setVisible(self, v):
             if v:
@@ -32,47 +114,45 @@ def main (Widget, PathUtil):
             else:
                 self.$element.find("ul").addClass("ui-helper-hidden")
 
-        def fetchDir(self, path):
-            self.fs.fetchDirectory(path, self.onListDir.bind(self))
+        def onListHomeDir(self, path, list):
+            self.fancytree.reload(self.toFancyTree(path,list,True))
 
-        def getPath(self):
-            return self.path
+        def toFancyTreeList(self, list):
+            nodes = []
+            for entity in list:
+                nodes.push(self.toFancyTreeNode(entity))
+            return nodes
 
-        def getList(self):
-            return self.list
+        def toFancyTreeNode(self, entity):
+            node = {}
+            node.title = entity.title
+            node.data = {}
+            node.data.type = entity.type
+            node.data.path = entity.path
+            node.folder = entity.type == "directory" ? True : False
+            node.key = entity.path
+            if node.folder:
+                node.children = []
+                node.expanded = False
+                node.lazy = True
+            return node
 
-        def update(self):
-            self.fancytree.reload(self.toFancyTreeNode(self.path,self.list,True))
-            self.notify(self.UPDATE)
+        def toFancyTree(self, path, list):
+            nodes = PathUtil.explode(path)
 
-        def onListDir(self, path, list):
-            self.path = path
-            self.list = list
-            self.update()
-
-
-        def toFancyTreeNode(self, path, list, expandToList=False):
-            preNodes = PathUtil.explode(path)
-            source = [{}]
-
-            currentNode = {children: source}
-            for node in preNodes:
-                currentNode = currentNode.children[0]
-                currentNode.title = node
-                currentNode.folder = True
-                currentNode.expanded = expandToList
-                currentNode.children = [{}]
-
+            source = {}
+            source.title = nodes[-1]
+            source.folder = True
+            source.expanded = True
+            source.children = []
+            source.key = path
+            source.data = {}
+            source.data.path = path
 
             for entity in list:
-                node = {}
-                node.title = entity.title
-                node.data = {}
-                node.data.type = entity.type
-                node.data.owner = entity.owner
-                node.folder = entity.type == "directory" ? True : False
-                currentNode.children.push(node)
+                node = self.toFancyTreeNode(entity)
+                source.children.push(node)
 
-            return source
+            return  [ source ]
 
     return TreeView

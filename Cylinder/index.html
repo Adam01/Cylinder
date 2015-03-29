@@ -3,13 +3,60 @@
         <script src="https://code.jquery.com/jquery-1.11.2.min.js" language="JavaScript"></script>
         <script src="//cdn.jsdelivr.net/sockjs/0.3.4/sockjs.min.js" language="JavaScript"></script>
         <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.min.js" language="JavaScript"></script>
+        <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.11.0/themes/smoothness/jquery-ui.css" type="text/css"/>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.fancytree/2.8.1/skin-win8-n/ui.fancytree.css" type="text/css"/>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.fancytree/2.8.1/jquery.fancytree-all.js" language="JavaScript"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/floatthead/1.2.10/jquery.floatThead.js" language="JavaScript"></script>
+        <script src="js/colResizable-1.5.min.js" language="JavaScript"></script>
 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.16/require.js" language="JavaScript"></script>
         <script src="js/Cylinder.js" language="JavaScript"></script>
+        <style>
+            * {
+                outline: solid 1px blue;
+            }
+            #TopSection {
+                height: 150px;
+            }
+            #MiddleSection {
+                height: 700px;
+            }
+            #BottomSection {
+                height: 150px;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+            }
+            #FileTree {
+                display: inline-block;
+            }
+            #CurrentDirectory {
+                width: 700px;
+                display: inline-block;
+            }
+
+        </style>
     </head>
     <body>
+        <div id="TopSection">
+            <div id="ConnectionContainer">
+
+            </div>
+        </div>
+        <div id="MiddleSection">
+            <div id="FileSystem">
+                <div id="FileTree">
+
+                </div>
+                <div id="CurrentDirectory">
+
+                </div>
+            </div>
+            <div id="Editor">
+
+            </div>
+        </div>
+        <div id="BottomSection">
+        </div>
     </body>
 </html>

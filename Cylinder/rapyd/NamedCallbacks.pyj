@@ -33,6 +33,7 @@ define(def():
                 self.callbacks[name].add(fn)
 
         def notify(self, name, *args):
+            console.debug("NOTIFY", name, self, *args)
             if name not in self.callbacks:
                 for fn in self.globalCallbacks:
                     fn.apply(this, args )

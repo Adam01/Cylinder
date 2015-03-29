@@ -1,6 +1,10 @@
 define( def():
+    pathSep = "/"
+    def setPathSep(ls):
+        pathSep = ls
+
     def explode(path, processSpecial):
-        pathArr = path.split("/")
+        pathArr = path.split(pathSep)
         pathClean = []
         for data in pathArr:
             if data.length:
@@ -14,10 +18,10 @@ define( def():
         joinedArgs = []
         for data in args:
             if data instanceof Object: data = data.path
-            if data.lastIndexOf("/",0) == 0:
+            if data.lastIndexOf(pathSep,0) == 0:
                 joinedArgs = []
 
-            joinedArgs.push.apply( joinedArgs, self.explode( data, false) )
+            joinedArgs.push.apply( joinedArgs, explode( data, False) )
         return joinedArgs
 
 
@@ -26,14 +30,14 @@ define( def():
             self.path = path
 
         def explode(self, processSpecial):
-            return PathUtil.explode(self.path, processSpecial)
+            return explode(self.path, processSpecial)
 
         def abs(self):
-            return "/" + self.explode(true).join("/")
+            return "/" + self.explode(true).join(pathSep)
 
         def join(self, *args):
             args.unshift(self.path)
-            self.path = PathUtil.join.apply(this, args).join("/")
+            self.path = join.apply(this, args).join(pathSep)
             return self
 
         def getName(self):
@@ -45,5 +49,5 @@ define( def():
         def clone(self):
             return new Path(self.path);
 
-    return {"Path": Path, "explode": explode, "join": join}
+    return {"Path": Path, "explode": explode, "join": join, "setPathSep": setPathSep}
 )

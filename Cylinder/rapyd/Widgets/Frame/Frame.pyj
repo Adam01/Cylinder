@@ -4,14 +4,14 @@ class Widget:
 
 define(["Widget"], def(Widget):
     class Frame(Widget):
-        def __init__(self, targetSelector, append=False):
-            Widget.__init__(self, "Frame", None, targetSelector)
-            self.subscribe(self.LOADED_HTML, def():
-                if append:
-                    self.$element = $(targetSelector).append(self.$element[0].innerHTML)
-                else:
-                    self.$element = $(targetSelector).html(self.$element[0].outerHTML).children().first()
-            )
+        def __init__(self, selector):
+            Widget.__init__(self, None, None)
+            self.$element = $(selector)
+            self.$element.resize(self.onResize.bind(self))
+
+        def onResize(self):
+            self.notify(self.RESIZE, self.$element.width(), self.$element.height())
+
 
     return Frame
 )

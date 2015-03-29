@@ -21,13 +21,13 @@ def main(Widget, DirectoryListRow):
             self.columnFields = ["title", "size", "owner", "modified"]
             self.rows = []
 
+            self.UPDATED = "OnUpdate"
+
             def setup():
 
                 pass
 
             self.subscribe(self.LOADED_HTML, setup.bind(self))
-            con = self.fs.getConnection()
-            con.subscribe(con.AUTHENTICATE, self.fetchDir.bind(self,"~"))
 
         def fetchDir(self, path):
             self.fs.fetchDirectory(path, self.onListDir.bind(self))
@@ -43,12 +43,24 @@ def main(Widget, DirectoryListRow):
                 self.fetchDir(row.data.path)
 
         def clear(self):
+            self.$element.find(".DirectoryListTable").colResizable({disable: true})
 
             $head = self.$element.find(".DirectoryListHeaderRow")
             $head.find(".DirectoryListHeaderCell").remove()
 
             for row in self.rows:
                 row.remove()
+
+            # this is possible
+            remaining = self.$element.find(".DirectoryListTable").find(".DirectoryListRow")
+            for item in remaining:
+                id = $(item).attr("WidgetID")
+                w = Widget.getWidgetByID(id)
+                if w:
+                    w.remove()
+                else:
+                    $(item).remove()
+
 
             self.rows = []
 
@@ -74,7 +86,6 @@ def main(Widget, DirectoryListRow):
                 $head.append($cell)
                 parentDirectory[column] = ""
 
-
             parentDirectory.title = ".."
             parentDirectory.type = "directory"
             parentDirectory.path = self.path + "/.."
@@ -83,11 +94,9 @@ def main(Widget, DirectoryListRow):
             for item in self.list:
                 self.addItem(item)
 
+            self.$element.find(".DirectoryListTable").colResizable({liveDrag: true, partialRefresh: true, postbackSafe: true, minWidth: 50})
 
-
-
-
-
+            self.notify(self.UPDATED, self.path)
 
 
     return DirectoryList
