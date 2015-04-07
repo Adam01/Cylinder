@@ -1,4 +1,4 @@
-widgets = ["CommandLine", "Connection", "DirectoryView", "Frame", "TreeView", "DirectoryList", "DirectoryListRow"]
+widgets = ["CommandLine", "Connection", "DirectoryView", "Frame", "TreeView", "DirectoryList", "DirectoryListRow","CodeMirrorWidget"]
 
 def getJSPaths(names):
     paths = []

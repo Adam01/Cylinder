@@ -1,0 +1,113 @@
+@external
+class Widget:
+    pass
+
+define(["Widget"], main)
+
+def main(Widget):
+
+    class EntityField(Widget):
+
+        def __init__(self, parentWidget, name=None, selector=None):
+            Widget.__init__(self, "EntityField", parentWidget, selector)
+            self.VALUE_CHANGED = "OnChangeValue"
+            self.name = name
+
+        def setValue(self, value):
+            self.$element.text(value)
+
+        def getValue(self):
+            return self.$element.text()
+
+        def getName(self):
+            return self.name
+
+        def setName(self, name):
+            self.name = name
+
+
+    # Editable field
+    class TitleField(EntityField):
+
+        def __init__(self, parentWidget, name=None, value=None, selector=None):
+            EntityField.__init__(self, parentWidget, name, selector)
+            def setup():
+                el = $("<input type='text'></input>")
+                self.$element.append(el)
+                self.$element = el
+
+                if value:
+                    self.setValue(value)
+
+            self.subscribe(self.LOADED_HTML, setup.bind(self))
+
+        def setValue(self, value):
+            self.$element.val(value)
+
+        def getValue(self):
+            return self.$element.val()
+
+
+    # DateTime field
+    # Converts timestamp to specified format
+    class DateTimeField(EntityField):
+        def __init__(self, parentWidget, name=None, timestamp=None, selector=None, format="dd/MM/yyyy HH:mm:ss"):
+            EntityField.__init__(self, parentWidget, name, selector)
+
+            self.format = format
+
+            def setup():
+                if timestamp:
+                    self.setValue(timestamp)
+
+            self.subscribe(self.LOADED_HTML, setup.bind(self))
+
+        def _update(self):
+            self.$element.text( $.format.date( Math.round(self.value*1000) , self.format) )
+
+        def setValue(self, value):
+            self.value = value
+            self._update()
+
+        def getValue(self):
+            return self.value
+
+        def setFormat(self, format):
+            self.format = format
+            self._update()
+
+        def getFormat(self):
+            return self.format
+
+
+    # Static field
+    class TextField(EntityField):
+        def __init__(self, parentWidget, name=None, value=None, selector=None):
+            EntityField.__init__(self, parentWidget, name, selector)
+            def setup():
+                if value:
+                    self.setValue(value)
+
+            self.subscribe(self.LOADED_HTML, setup.bind(self))
+
+    @external
+    class defaultType:
+        pass
+
+    def FieldFactory(type, value=None, parent=None, selector=None, defaultType=None):
+        type = type.toLowerCase()
+        if type == "title":
+            return TitleField(parent, type, value, selector)
+        elif type in ["accessed", "modified", "created"]:
+            return DateTimeField(parent, type, value,selector)
+        elif defaultType:
+            return defaultType(parent, type, value, selector)
+        else:
+            return None
+
+    return {
+        "TitleField": TitleField,
+        "DateTimeField": DateTimeField,
+        "TextField": TextField,
+        "FieldFactory": FieldFactory
+    }

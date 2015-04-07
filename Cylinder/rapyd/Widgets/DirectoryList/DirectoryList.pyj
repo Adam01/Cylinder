@@ -1,5 +1,8 @@
 @external
 class Widget:
+    @staticmethod
+    def getWidgetByID(id):
+        pass
     pass
 
 @external
@@ -22,12 +25,31 @@ def main(Widget, DirectoryListRow):
             self.rows = []
 
             self.UPDATED = "OnUpdate"
+            self.ITEM_DBL_CLICKED = "OnItemDblClick"
+            self.ITEM_SELECTED = "OnItemSelection"
 
             def setup():
-
+                self.$element.selectable({
+                    filter: ".DirectoryListRow",
+                    stop: self.onItemSelected.bind(self),
+                    cancel: ".ui-selected"
+                })
                 pass
 
             self.subscribe(self.LOADED_HTML, setup.bind(self))
+
+        def getRowByID(self, widgetID):
+            for item in self.rows:
+                if item.WidgetID == widgetID:
+                    return item
+            return None
+
+        def onItemSelected(self, ev, ui):
+            selected = []
+            self.$element.find(".DirectoryListRow.ui-selected").each(def():
+                selected.push( self.getRowByID( $(this).attr("WigdetID") ) )
+            )
+            self.notify(self.ITEM_SELECTED, selected)
 
         def fetchDir(self, path):
             self.fs.fetchDirectory(path, self.onListDir.bind(self))
@@ -39,8 +61,9 @@ def main(Widget, DirectoryListRow):
             return self.list
 
         def onRowDblClick(self, row, ev):
-            if row.data.type == "directory":
-                self.fetchDir(row.data.path)
+            if row.item.type == "directory":
+                self.fetchDir(row.item.path)
+            self.notify(self.ITEM_DBL_CLICKED, row)
 
         def clear(self):
             self.$element.find(".DirectoryListTable").colResizable({disable: true})
@@ -48,10 +71,12 @@ def main(Widget, DirectoryListRow):
             $head = self.$element.find(".DirectoryListHeaderRow")
             $head.find(".DirectoryListHeaderCell").remove()
 
+            self.$element.find(".DirectoryListBody").html("")
             for row in self.rows:
-                row.remove()
+                row.remove(False)
+            self.rows = []
 
-            # this is possible
+            """ this is possible
             remaining = self.$element.find(".DirectoryListTable").find(".DirectoryListRow")
             for item in remaining:
                 id = $(item).attr("WidgetID")
@@ -60,9 +85,9 @@ def main(Widget, DirectoryListRow):
                     w.remove()
                 else:
                     $(item).remove()
+            """
 
 
-            self.rows = []
 
         def onListDir(self, path, list):
             self.path = path
@@ -71,10 +96,11 @@ def main(Widget, DirectoryListRow):
 
         def addItem(self, item):
             row = DirectoryListRow(self, item)
-            row.subscribe(row.DBL_CLICKED, self.onRowDblClick.bind(self) )
+            self.subscribeTo(row, row.DBL_CLICKED, self.onRowDblClick)
             self.rows.push(row)
+            return row
 
-        def update(self):
+        def redraw(self):
             self.clear()
             $head = self.$element.find(".DirectoryListHeaderRow")
 
@@ -98,5 +124,44 @@ def main(Widget, DirectoryListRow):
 
             self.notify(self.UPDATED, self.path)
 
+        def update(self):
+
+            if self.rows.length == 0 or self.rows[0].cells.length != self.columnFields.length:
+                return self.redraw()
+
+            self.setVisible(False)
+            self.$element.find(".DirectoryListTable").colResizable({disable: true})
+
+            self.rows[0].item.path = self.path + "/.."
+            row_i = 1
+            row_count = self.rows.length
+            last_added = None
+            for item in self.list:
+                if row_i >= row_count:
+                    last_added = self.addItem(item)
+                else:
+                    self.rows[row_i].updateFromItem(item)
+                row_i += 1
+            while row_i < row_count:
+                self.rows[row_i].remove()
+                self.rows.splice(row_i,1)
+                row_count -= 1
+
+
+            def reshow():
+                self.setVisible(True)
+                self.$element.find(".DirectoryListTable").colResizable({liveDrag: true, partialRefresh: true, postbackSafe: true, minWidth: 50})
+
+            # Show when last row has loaded
+            if last_added is not None:
+                self.subscribeTo(last_added, last_added.LOADED_HTML, reshow)
+            else:
+                reshow()
+
+            self.notify(self.UPDATED, self.path)
+
+        def remove(self, removeFromDOM=True):
+            self.clear()
+            Widget.remove(self, removeFromDOM)
 
     return DirectoryList

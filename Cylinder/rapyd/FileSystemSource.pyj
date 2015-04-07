@@ -3,17 +3,19 @@
 """
 
 @external
-class NamedCallbacks:
+class Observable:
     pass
 
-define(["NamedCallbacks"], def(NamedCallbacks):
+define(["Observable","utf8"], def(Observable, utf8):
 
-    class FileSystemSource(NamedCallbacks):
+    class FileSystemSource(Observable):
         def __init__(self, connection):
-            NamedCallbacks.__init__(self)
+            Observable.__init__(self)
             self.connection = connection
             self.CMD_LISTDIR = "list_dir"
             self.CMD_GETPATHSEP = "get_path_separator"
+            self.CMD_FETCHCONTENTS = "get_file_contents"
+            self.CMD_SETCONTENTS = "set_file_contents"
 
             #self.rootNode = EntityNode(None, "~", "d")
 
@@ -44,66 +46,32 @@ define(["NamedCallbacks"], def(NamedCallbacks):
         def fetchDirectory(self, path, cb=None):
             self.connection.sendCommand(self.CMD_LISTDIR, {path: path}, self.onDirectoryListing.bind(self,cb))
 
+        def onFileContents(self, cb, response):
+            if response.status != "Completed" or response.result is False:
+                console.log("Unable to get file contents: ", response)
+                if cb:
+                    cb(path, None)
+            else:
+                path = response.data.path
+                response.data.data = utf8.decode(response.data.data)
+
+                if cb:
+                    cb(path, response.data )
+
+        def onSetFileContents(self, cb, response):
+            result = True
+            if response.status != "Completed" or response.result is False:
+                console.log("Unable to set file contents: ", response)
+                result = False
+
+            if cb:
+                cb(response.data.path, result)
+
+        def setFileContents(self, path, data, cb=None):
+            self.connection.sendCommand(self.CMD_SETCONTENTS, {path: path, data: utf8.encode(data)}, self.onSetFileContents.bind(self,cb))
+
+        def fetchFileContents(self, path, cb=None):
+            self.connection.sendCommand(self.CMD_FETCHCONTENTS, {path: path}, self.onFileContents.bind(self, cb))
+
     return FileSystemSource
 )
-
-"""
-
-    class EntityNode:
-        def __init__(self, parentNode, name, type):
-            self.parentNode = parentNode
-            self.name = name
-            self.children = []
-            self.type = type
-
-        def getName(self):
-            return self.name
-
-        def getParentNode(self):
-            return self.parentNode
-
-        def getChildren(self):
-            return self.children
-
-        def getType(self):
-            return self.type
-
-        def getChildNode(self, name):
-            for node in self.children:
-                if node.name == name:
-                    return node
-            return None
-
-        def generateParts(self):
-            parentParts = []
-            if not self.isRoot():
-                parentParts.push( self.parentNode.generateParts() )
-            parentParts.push(self.name)
-            return parentParts
-
-        def isRoot(self):
-            return self.parentNode is None
-
-        def getRootNode(self):
-            if self.isRoot():
-                return self
-            return self.parentNode.getRootNode()
-
-        def findNode(self, parts, create=false):
-            name = parts[0]
-            if name == self.name:
-                return self
-            childNode = self.getChildNode(name)
-            if childNode is not None:
-                parts.shift()
-                return childNode.findNode(parts)
-            elif create:
-                root = self
-                while parts.length > 0:
-                    name = parts.shift()
-                    root.children.push( EntityNode(root, name,"d") )
-                    root = root.children[root.children.length]
-                return root
-            return None
-
-"""

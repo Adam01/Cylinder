@@ -1,0 +1,63 @@
+define(def():
+
+    class Observable:
+        def __init__(self):
+            self.__callbacks = {}
+            self.__once_callbacks = {}
+
+        def subscribe(self, name, fn):
+            if name not in self.__callbacks:
+                self.__callbacks[name] = $.Callbacks("unique")
+
+            return self.__callbacks[name].add(fn)
+
+        def subscribeOnce(self, name, fn):
+            if name not in self.__once_callbacks:
+                self.__once_callbacks[name] = $.Callbacks("unique once")
+
+            return self.__once_callbacks[name].add(fn)
+
+        def notify(self, name, *args):
+            console.debug("NOTIFY", name, self, *args)
+
+            if name in self.__callbacks:
+                self.__callbacks[name].fire.apply(self, args )
+
+            if name in self.__once_callbacks:
+                self.__once_callbacks[name].fire.apply(self, args)
+                del self.__once_callbacks[name]
+
+            if "ALL_CALLBACKS" in self.__callbacks:
+                self.__callbacks["ALL_CALLBACKS"].fire.apply(self, [name].concat(args))
+
+        def removeFunctionCallbacks(self, fn):
+            for name in Object.keys(self.__callbacks):
+                self.__callbacks[name].remove(fn)
+
+            for name in Object.keys(self.__once_callbacks):
+                self.__once_callbacks[name].remove(fn)
+
+        def removeNamedFunctionCallbacks(self, name, fn):
+            if name in Object.keys(self.__callbacks):
+                self.__callbacks[name].remove(fn)
+
+            if name in Object.keys(self.__once_callbacks):
+                self.__once_callbacks[name].remove(fn)
+
+        def removeNamedCallbacks(self, name):
+            if name in Object.keys(self.__callbacks):
+                del self.__callbacks[name]
+
+            if name in Object.keys(self.__once_callbacks):
+                del self.__once_callbacks[name]
+
+        def removeAllCallbacks(self):
+            for name in Object.keys(self.__callbacks):
+                del self.__callbacks[name]
+
+            for name in Object.keys(self.__once_callbacks):
+                del self.__once_callbacks[name]
+
+
+    return Observable
+)

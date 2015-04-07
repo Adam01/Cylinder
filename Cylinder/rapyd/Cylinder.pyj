@@ -23,6 +23,9 @@ module Widgets:
     @external
     class DirectoryList:
         pass
+    @external
+    class CodeMirrorWidget:
+        pass
 
 
 require.config({
@@ -30,6 +33,7 @@ require.config({
 })
 
 require( ["Widgets", "Connection", "FileSystemSource","PathUtil"], main)
+
 
 def main(Widgets, Connection, FileSystemSource, PathUtil):
 
@@ -39,18 +43,22 @@ def main(Widgets, Connection, FileSystemSource, PathUtil):
 
     connection = Connection()
     Widgets.Connection(Widgets.Frame("#ConnectionContainer"), connection)
-    Widgets.CommandLine(bottomSection, connection)
+    #Widgets.CommandLine(bottomSection, connection)
     fs = FileSystemSource(connection)
-    tv = Widgets.TreeView(Widgets.Frame("#FileTree"), fs )
 
-    dl = Widgets.DirectoryList(Widgets.Frame("#CurrentDirectory"), fs)
+    treeView = Widgets.TreeView(Widgets.Frame("#FileTree"), fs )
+    directoryList = Widgets.DirectoryList(Widgets.Frame("#CurrentDirectory"), fs)
+    editor = Widgets.CodeMirrorWidget(Widgets.Frame("#Editor"), fs)
 
-    tv.subscribe(tv.ITEM_CLICKED, def(node):
-        dl.fetchDir(node.data.path)
+    directoryList.subscribeTo(treeView, treeView.ITEM_CLICKED, def(node):
+        directoryList.fetchDir(node.data.path)
     )
 
-    dl.subscribe(dl.UPDATED, def(path):
-        tv.activatePath(path)
+    treeView.subscribeTo(directoryList, directoryList.UPDATED, treeView.activatePath)
+
+    directoryList.subscribe(directoryList.ITEM_DBL_CLICKED, def(row):
+        if row.item.type == "file":
+            editor.loadFromServer(row.item.path)
     )
 
     connection.subscribe(connection.AUTHENTICATE, def():
@@ -58,8 +66,11 @@ def main(Widgets, Connection, FileSystemSource, PathUtil):
             PathUtil.setPathSep(ps)
         )
         fs.fetchDirectory("~", def(path, list):
-            tv.onListHomeDir(path, list)
-            dl.onListDir(path, list)
+            treeView.onListHomeDir(path, list)
+            directoryList.onListDir(path, list)
         )
     )
+
+String.prototype.capitalise = def():
+    return this.charAt(0).toUpperCase() + this.slice(1)
 

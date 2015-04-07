@@ -2,9 +2,9 @@
 class Widget:
     pass
 
-define(["Widget"], main)
+define(["Widget", "Widgets/EntityField/EntityField"], main)
 
-def main(Widget):
+def main(Widget, EntityField):
     class DirectoryListRow(Widget):
         def __init__(self, parentWidget, item):
             Widget.__init__(self, "DirectoryListRow", parentWidget, ".DirectoryListBody")
@@ -12,20 +12,68 @@ def main(Widget):
             self.DBL_CLICKED = "OnDoubleClick"
             self.CLICKED = "OnClick"
 
-            self.data = item
+            self.item = item
+            self.cells = []
 
             def setup():
-                self.$element.addClass( self.data.type + "Entity")
+
                 self.$element.dblclick(self.notify.bind(self, self.DBL_CLICKED, self))
                 self.$element.click(self.notify.bind(self, self.CLICKED, self))
 
-                for column in self.parent.columnFields:
-                    $cell = $("<td class='DirectoryListCell'><div></div></td>")
-                    $cell.find("div").text( item[column] )
-                    self.$element.append($cell)
+                if self.item:
+                    self.setFromItem(self.item)
 
 
             self.subscribe(self.LOADED_HTML, setup.bind(self))
+
+        def clear(self):
+            self.$element.html("")
+            for cell in self.cells:
+                cell.remove(False)
+            self.cells = []
+
+        def setFromItem(self, item):
+            self.clear()
+            self.item = item
+            for column in self.parent.columnFields:
+                self.addCell(column, self.item[column])
+
+            self.$element.removeClass("FileEntity")
+            self.$element.removeClass("DirectoryEntity")
+            self.$element.addClass( self.item.type.capitalise() + "Entity")
+
+        def updateFromItem(self, item):
+            if self.parent.columnFields.length != self.cells.length:
+                return self.setFromItem(item)
+
+            self.item = item
+            cell_i = 0
+            for column in self.parent.columnFields:
+                self.cells[cell_i].setValue(self.item[column])
+                cell_i += 1
+
+            self.$element.removeClass("FileEntity")
+            self.$element.removeClass("DirectoryEntity")
+            self.$element.addClass( self.item.type.capitalise() + "Entity")
+
+
+        def onFieldChange(self, field, name, value):
+            self.notify(self.FIELD_CHANGED, field, name, value)
+
+        def addCell(self, column, name):
+            td = $("<td class='DirectoryListCell'></td>")
+            self.$element.append(td)
+            if column == "title" and self.item.type == "directory" and self.item.title == "..":
+                #Make the factory default to text field
+                column = "_"
+            cell = EntityField.FieldFactory(column, name, self, td, EntityField.TextField)
+
+            self.subscribeTo(cell, cell.VALUE_CHANGED, self.onFieldChange, cell)
+            self.cells.push(cell)
+
+        def remove(self, removeFromDOM=True):
+            self.clear()
+            Widget.remove(self, removeFromDOM)
 
 
     return DirectoryListRow

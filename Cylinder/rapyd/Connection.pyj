@@ -1,13 +1,13 @@
 @external
-class NamedCallbacks:
+class Observable:
     pass
 
-define(["NamedCallbacks"], def(NamedCallbacks):
+define(["Observable"], def(Observable):
 
-    class Connection(NamedCallbacks):
+    class Connection(Observable):
 
         def __init__(self):
-            NamedCallbacks.__init__(self)
+            Observable.__init__(self)
             self.nextCallbackID = 0
             self.socket = null
             self.username = null
@@ -51,7 +51,15 @@ define(["NamedCallbacks"], def(NamedCallbacks):
             name = data.callback_id or data.method
             self.notify(name, data)
 
+        def disconnect(self):
+            if self.socket:
+                self.socket.close()
+            self.socket = None
+
         def connect(self, address, username, password):
+            if self.socket:
+                self.disconnect()
+
             self.socket = SockJS(address)
             self.address = address
             self.username = username
@@ -61,6 +69,7 @@ define(["NamedCallbacks"], def(NamedCallbacks):
 
             self.socket.onclose = def():
                 self.notify(self.DISCONNECT, address)
+
 
             self.socket.onmessage = self.onLoginReply.bind(self)
 

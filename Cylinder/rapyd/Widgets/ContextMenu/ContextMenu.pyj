@@ -1,0 +1,53 @@
+@external
+class Widget:
+    pass
+
+define(["Widget"], main)
+
+def main(Widget):
+    class ContextMenu(Widget):
+        def __init__(self, parentWidget, delegate ):
+            Widget.__init__(self, None, parentWidget)
+            self.$container = self.getParent().$element
+            self.$container.contextMenu({
+                autoFocus: True,
+                delegate: delegate,
+                hide: False,
+                menu: [],
+                preventContextMenuForPopup: True,
+                preventSelect: True,
+                show: False,
+                tapHold: True,
+            })
+
+        def addItem(self, title, callback = None ):
+            cmd = "cmd_" + title
+            self.$container.contextmenu("setEntry", cmd, {
+                action: callback,
+                cmd: cmd,
+                title: title
+            })
+            return self
+
+        def setItemVisible(self, title, visible):
+            cmd = "cmd_" + title
+            self.$container.contextmenu("showEntry", cmd, visible)
+            return self
+
+        def setItemEnabled(self, title, enable):
+            cmd = "cmd_" + title
+            self.$container.contextmenu("enableEntry", cmd, enable)
+            return self
+
+        def isOpen(self):
+            return self.$container.contextmenu("isOpen")
+
+        def open(self, target):
+            self.$container.contextmenu("open", target )
+            return self
+
+        def close(self):
+            self.$container.contextmenu("close")
+            return self
+
+    return ContextMenu

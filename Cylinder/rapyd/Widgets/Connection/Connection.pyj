@@ -18,9 +18,10 @@ define(["Widget"], def(Widget):
                 self.$element.find("#ConnectButton").click(self.onStartConnect.bind(self))
 
             self.subscribe(self.LOADED_HTML, setup.bind(self))
-            self.connection.subscribe(self.connection.CONNECT, self.onConnect.bind(self))
-            self.connection.subscribe(self.connection.AUTHENTICATE, self.onAuth.bind(self))
-            self.connection.subscribe(self.connection.DISCONNECT, self.onDisconnect.bind(self))
+
+            self.subscribeTo(self.connection, self.connection.CONNECT, self.onConnect)
+            self.subscribeTo(self.connection, self.connection.AUTHENTICATE, self.onAuth)
+            self.subscribeTo(self.connection, self.connection.DISCONNECT, self.onDisconnect)
 
         def getConnection(self):
             return self.connection

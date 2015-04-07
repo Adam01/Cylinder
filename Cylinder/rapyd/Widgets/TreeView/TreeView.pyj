@@ -18,6 +18,7 @@ def main (Widget, PathUtil):
             self.fancytree = None
             self.data = None
             self.collapse_inactive = True
+            self.show_files = False
 
             def setup():
                 self.$element.fancytree({
@@ -120,6 +121,8 @@ def main (Widget, PathUtil):
         def toFancyTreeList(self, list):
             nodes = []
             for entity in list:
+                if not self.show_files and entity.type == "file":
+                    continue
                 nodes.push(self.toFancyTreeNode(entity))
             return nodes
 
@@ -144,14 +147,11 @@ def main (Widget, PathUtil):
             source.title = nodes[-1]
             source.folder = True
             source.expanded = True
-            source.children = []
             source.key = path
             source.data = {}
             source.data.path = path
 
-            for entity in list:
-                node = self.toFancyTreeNode(entity)
-                source.children.push(node)
+            source.children = self.toFancyTreeList(list)
 
             return  [ source ]
 

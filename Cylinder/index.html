@@ -1,62 +1,87 @@
+<!DOCTYPE html>
 <html>
     <head>
+        <meta charset="utf-8"/>
+
         <script src="https://code.jquery.com/jquery-1.11.2.min.js" language="JavaScript"></script>
         <script src="//cdn.jsdelivr.net/sockjs/0.3.4/sockjs.min.js" language="JavaScript"></script>
         <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.min.js" language="JavaScript"></script>
-        <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.11.0/themes/smoothness/jquery-ui.css" type="text/css"/>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.fancytree/2.8.1/skin-win8-n/ui.fancytree.css" type="text/css"/>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.fancytree/2.8.1/jquery.fancytree-all.js" language="JavaScript"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/floatthead/1.2.10/jquery.floatThead.js" language="JavaScript"></script>
         <script src="js/colResizable-1.5.min.js" language="JavaScript"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-dateFormat/1.0/jquery.dateFormat.js" language="JavaScript"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.ui-contextmenu/1.8.2/jquery.ui-contextmenu.min.js" language="JavaScript"></script>
+
+        <link rel="stylesheet" href="/codemirror/lib/codemirror.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/custom-theme/jquery-ui-1.10.0.custom.css" type="text/css"/>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.fancytree/2.8.1/skin-win8-n/ui.fancytree.css" type="text/css"/>
+        <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css" type="text/css"/>
 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.16/require.js" language="JavaScript"></script>
         <script src="js/Cylinder.js" language="JavaScript"></script>
         <style>
             * {
-                outline: solid 1px blue;
+                #outline: solid 1px blue;
+            }
+            html, body, #MiddleSection {
+                height: 100%;
+            }
+            body > #MiddleSection {
+                height: auto;
+                min-height: 90%;
+
+            }
+            body {
+                padding: 0 3em;
             }
             #TopSection {
-                height: 150px;
+                height: 5em;
+
             }
-            #MiddleSection {
-                height: 700px;
-            }
+
             #BottomSection {
-                height: 150px;
-                position: fixed;
-                bottom: 0;
-                left: 0;
+                clear: both;
+                position: relative;
+                z-index: 10;
+                height: 5em;
+                margin-top: -5em;
+                padding: 2em;
             }
-            #FileTree {
-                display: inline-block;
+
+            #MiddleSection {
+                padding: 2em;
             }
-            #CurrentDirectory {
-                width: 700px;
-                display: inline-block;
+
+            #MiddleSection, #BottomSection, body {
+                background-color: aliceblue;
             }
+            #TopSection {
+                background-color: darkslategrey;
+            }
+
 
         </style>
     </head>
-    <body>
-        <div id="TopSection">
-            <div id="ConnectionContainer">
+    <body class="container-fluid">
+        <div id="TopSection" class="row">
+            <div id="ConnectionContainer" class="col-md-12">
 
             </div>
         </div>
-        <div id="MiddleSection">
-            <div id="FileSystem">
-                <div id="FileTree">
+        <div id="MiddleSection" class="row">
+            <div id="FileSystem" class="col-md-6">
+                <div id="FileTree" class="col-md-5">
 
                 </div>
-                <div id="CurrentDirectory">
+                <div id="CurrentDirectory" class="col-md-7">
 
                 </div>
             </div>
-            <div id="Editor">
+            <div id="Editor" class="col-md-6">
 
             </div>
         </div>
-        <div id="BottomSection">
+        <div id="BottomSection" class="row">
         </div>
     </body>
 </html>

@@ -1,0 +1,124 @@
+@external
+class Observable:
+    pass
+
+define(["Observable"], def(Observable):
+
+    def hasValue(obj, val, checkProtos=True, recursive=True):
+        for prop in Object.keys(obj):
+            if obj[prop] == val:
+                return True
+
+        if checkProtos and obj.__proto__:
+            return hasValue(obj.__proto__, val, recursive)
+
+        return False
+
+    class BoundObserver(Observable):
+        def __init__(self):
+            Observable.__init__(self)
+            self.__subscribedTo = []
+            self.__UNBIND = "ObserverUnbind"
+
+        def removeAllCallbacks(self, unbind=True):
+            if unbind:
+                self.notify(self.__UNBIND, self, None, None)
+            Observable.removeAllCallbacks(self)
+
+        def removeNamedCallbacks(self, name, unbind=True):
+            if unbind:
+                self.notify(self.__UNBIND, self, name, None)
+            Observable.removeNamedCallbacks(self, name)
+
+        def removeNamedFunctionCallbacks(self, name, fn, unbind=True):
+            if unbind:
+                self.notify(self.__UNBIND, self, name, fn)
+            Observable.removeNamedFunctionCallbacks(self, name, fn)
+
+        def removeFunctionCallbacks(self, fn, unbind=True):
+            if unbind:
+                self.notify(self.__UNBIND, self, None, fn)
+            Observable.removeFunctionCallbacks(self, fn)
+
+        def unbindCallbacks(self):
+            # Remove what this has subscribed to
+            for subject in self.__subscribedTo:
+                for subscriber in subject.subscribers:
+                    subject.subject.removeNamedFunctionCallbacks(subscriber.name, subscriber.fn, False)
+            self.__subscribedTo = None
+
+        def __removeSubscribers(self, subject, name, fn):
+            subobj = None
+            for obj in self.__subscribedTo:
+                    if obj.subject == subject:
+                        subobj = obj
+
+            if subobj is not None:
+                toRemove = []
+                if name is not None and fn is not None:
+                    for subscriber in subobj.subscribers:
+                        if subscriber.name == name and subscriber.fn == fn:
+                            toRemove.push(subscriber)
+                elif name is not None:
+                    for subscriber in subobj.subscribers:
+                        if subscriber.name == name:
+                            toRemove.push(subscriber)
+                elif fn is not None:
+                    for subscriber in subobj.subscribers:
+                        if subscriber.fn == fn:
+                            toRemove.push(subscriber)
+                else: # All were none
+                    loc = self.__subscribedTo.indexOf(subobj)
+                    self.__subscribedTo.splice(loc,1)
+                    return
+
+                for subscriber in toRemove:
+                    loc = subobj.subscribers.indexof(subscriber)
+                    subobj.subscribers.splice(loc, 1)
+            else:
+                console.error("Got an unbind from a subscriber I'm apparently not bound to")
+
+        def __addSubscriber(self, subject, name, callback, boundArgs):
+            if hasValue(self, callback):
+                fn = callback.bind(self, *boundArgs)
+            else:
+                fn = callback.bind(*boundArgs)
+
+            obj = None
+            for obj2 in self.__subscribedTo:
+                if obj2.subject == subject:
+                    obj = obj2
+                    break
+
+            pair = {
+                name: name,
+                fn: fn
+            }
+
+            if obj is None:
+                obj = {
+                    subject: subject,
+                    subscribers: [pair]
+                }
+                self.__subscribedTo.push(obj)
+                rm = {
+                    name: self.__UNBIND,
+                    fn: self.__removeSubscribers.bind(self)
+                }
+                obj.subscribers.push(rm)
+                subject.subscribe(rm.name, rm.fn)
+            else:
+                obj.subscribers.push(pair)
+
+            return obj, pair
+
+        def subscribeTo(self, subject, name, callback, *boundArgs):
+            obj, pair = self.__addSubscriber(subject,name, callback, boundArgs)
+            subject.subscribe(pair.name, pair.fn)
+
+        def subscribeOnceTo(self, subject, name, callback, *boundArgs):
+            obj, pair = self.__addSubscriber(subject,name, callback, boundArgs)
+            subject.subscribeOnce(pair.name, pair.fn)
+
+    return BoundObserver
+)

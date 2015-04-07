@@ -1,31 +1,11 @@
-.FileEntity {
-  background-color: inherit;
-}
-.DirectoryEntity {
-  background-color: khaki;
-}
 .DirectoryListHeaderCell {
   text-transform: capitalize;
 }
 
-.FileEntity, .DirectoryEntity {
-  &:hover {
-    background-color: azure;
-  }
-  .active {
-    background-color: green;
-  }
-}
-
 .DirectoryList{
-  overflow-y: scroll;
+  overflow-y: auto;
+  overflow-x: hidden;
   height: 30em;
-}
-
-.DirectoryListCell div {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .DirectoryListTable {

@@ -1,0 +1,130 @@
+@external
+class Widget:
+    pass
+
+define([
+            "Widget",
+            "PathUtil",
+            "../../../codemirror/lib/codemirror",
+            "../../../codemirror/addon/mode/loadmode",
+            "../../../codemirror/mode/meta"
+        ],main)
+
+def main(Widget, PathUtil, CodeMirror):
+    class CodeMirrorWidget(Widget):
+        def __init__(self, parentWidget, fs):
+            Widget.__init__(self, "CodeMirrorWidget", parentWidget)
+            self.fs = fs
+            self.path = None
+            self.encoding = None
+            self.eol = None
+            self.codemirror = None
+
+            def setupMenuButton(selector, icon, callback):
+                self.menu.find(selector).button({
+                    text: false,
+                    icons: {
+                        primary: icon
+                    }
+                }).click(callback.bind(self))
+
+            def setup():
+                CodeMirror.modeURL = "../codemirror/mode/%N/%N"
+                self.codemirror = CodeMirror( self.$element.find(".CodeMirrorEditor").get(0), {lineNumbers: true} )
+                self.codemirror.setSize("100%", "30em");
+                self.doc = self.codemirror.getDoc()
+                self.menu = self.$element.find(".CodeMirrorMenu")
+                setupMenuButton("[name=undo]", "ui-icon-arrowreturn-1-w", self.onUndoClicked)
+                setupMenuButton("[name=redo]", "ui-icon-arrowreturn-1-e", self.onRedoClicked)
+                setupMenuButton("[name=reload]", "ui-icon-refresh", self.onReloadClicked)
+                setupMenuButton("[name=save]", "ui-icon-disk", self.onSaveClicked)
+
+            self.subscribe(self.LOADED_HTML, setup.bind(self))
+
+        def onUndoClicked(self):
+            self.doc.undo()
+
+        def onRedoClicked(self):
+            self.doc.redo()
+
+        def onReloadClicked(self):
+            self.loadFromServer(self.path)
+
+        def onSaveClicked(self):
+            self.saveToServer()
+
+        def setValue(self, val):
+            self.codemirror.setValue(val)
+
+        def getValue(self):
+            return self.codemirror.getValue()
+
+
+        def saveState(self):
+            self.lastState = self.getValue()
+
+        def getLastState(self):
+            return self.lastState
+
+        def revertState(self):
+            self.setValue(self.getLastState())
+
+        def getStateDiff(self):
+            # Return cydiff of lastState and current content
+            # cydiff made up of: current line ending, array of changes (just + and -)
+            pass
+
+        def updateFooter(self):
+            self.$element.find(".CodeMirrorFooter .path").text(self.path)
+            self.$element.find(".CodeMirrorFooter .encoding").text(self.encoding)
+            self.$element.find(".CodeMirrorFooter .eol").text(self.eol)
+            self.$element.find(".CodeMirrorFooter .mime").text(self.mime)
+
+        def onServerFile(self, path, data):
+
+            if data is None:
+                #TODO notify user
+                return
+
+            self.path = path
+            self.encoding = data.encoding
+            self.eol = data.eol
+            self.lang = data.lang
+            self.mime = data.mime
+
+            self.setValue(data.data)
+            self.doc.clearHistory()
+            self.saveState()
+            self.updateFooter()
+
+            info = None
+            if self.mime:
+                info = CodeMirror.findModeByMIME(self.mime)
+            else:
+                ext = PathUtil.explode(self.path).pop().split(".")
+                if len(ext) > 1:
+                    ext = ext.pop()
+                    info = CodeMirror.findModeByExtension(ext)
+
+                elif self.lang:
+                    info = {"mime": self.lang, "mode": self.lang}
+
+            if info:
+                CodeMirror.autoLoadMode(self.codemirror, info.mode)
+
+
+        def loadFromServer(self,path):
+            self.path = path
+            self.fs.fetchFileContents(self.path, self.onServerFile.bind(self))
+
+        def onSaved(self, response):
+            #TODO handle response
+            pass
+
+        def saveToServer(self, to_path=None):
+            if to_path is None:
+                to_path = self.path
+            self.fs.setFileContents(to_path, self.getValue(), self.onSaved.bind(self))
+
+
+    return CodeMirrorWidget

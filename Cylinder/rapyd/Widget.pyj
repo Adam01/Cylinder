@@ -1,8 +1,8 @@
 @external
-class NamedCallbacks:
+class BoundObserver:
     pass
 
-define(["NamedCallbacks"], def(NamedCallbacks):
+define(["BoundObserver"], def(BoundObserver):
 
     def GetWidgetPath(sourceName):
         return "./js/Widgets/" + sourceName + "/"
@@ -22,7 +22,6 @@ define(["NamedCallbacks"], def(NamedCallbacks):
     def LoadMarkup(widget, appendToSelector, widgetPathName, onLoaded=None):
 
         def onHTMLData(data):
-            #HTMLCache[widgetPathName] = data
 
             def applyMarkup():
                 # It is possible for the widget to be removed before the markup is applied
@@ -49,14 +48,17 @@ define(["NamedCallbacks"], def(NamedCallbacks):
                 applyMarkup()
 
         if widgetPathName in HTMLCache:
-            onHTMLData(HTMLCache[widgetPathName])
+            callLater = onHTMLData.bind(widget, HTMLCache[widgetPathName])
+            setTimeout(callLater,1)
+
         else:
             $.ajax(widgetPathName + ".html", {
-                success: onHTMLData
+                success: def(data):
+                    HTMLCache[widgetPathName] = data
+                    onHTMLData(data)
             })
 
-
-    class Widget(NamedCallbacks):
+    class Widget(BoundObserver):
         @staticmethod
         def getWidgetByID(id):
             nonlocal Widgets
@@ -65,7 +67,7 @@ define(["NamedCallbacks"], def(NamedCallbacks):
             return None
 
         def __init__(self, sourceName, parentWidget, appendToSelector=None):
-            NamedCallbacks.__init__(self)
+            BoundObserver.__init__(self)
 
             console.log(self)
 
@@ -76,9 +78,11 @@ define(["NamedCallbacks"], def(NamedCallbacks):
 
             self.LOADED_HTML = "OnLoadHTML"
             self.RESIZED = "OnResize"
+            self.REMOVED = "OnRemove"
 
             self.$element = None
             self.parent = parentWidget
+            self.subscribedTo = []
 
             onLoadedHTML = self.notify.bind(self, self.LOADED_HTML, self)
 
@@ -91,7 +95,14 @@ define(["NamedCallbacks"], def(NamedCallbacks):
 
             Widgets[self.WidgetID] = self
 
+            if self.parent:
+                self.subscribeTo(self.parent, self.REMOVED, def(parent, removedFromDOM):
+                    self.remove(False)
+                )
+
         def setVisible(self, show):
+            if not self.$element:
+                return self
             if show:
                 self.$element.show()
             else:
@@ -99,22 +110,42 @@ define(["NamedCallbacks"], def(NamedCallbacks):
             return self
 
         def setEnabled(self, enable):
+            if not self.$element:
+                return self
             if enable:
                 self.$element.enable()
             else:
                 self.$element.disable()
             return self
 
-        def remove(self):
+        # Set removeFromDOM to False when the DOM has already been removed
+        # Useful for removing an entire tree and then just unregistering the widget
+
+        # Will break reference to parent, and anything that has subscribed to this by removing all callbacks
+        def remove(self, removeFromDOM=True):
+
+            self.removing = True
+            self.notify(self.REMOVED, self, removeFromDOM)
+
             if self.$element is not None:
-                self.$element.remove()
+                self.$element.off()
+                if removeFromDOM:
+                    self.$element.remove()
                 self.$element = None
+
+            # Prevents keeping the parent alive if this isn't gc'd
+            self.parent = None
             nonlocal Widgets
             Widgets[self.WidgetID] = undefined
 
-        def addChildWidget(self, w):
-            self.$element.append(w.$element)
-            return self
+
+            # Break references to dependent subscribers
+            self.removeAllCallbacks()
+
+            # Break references to subjects
+            self.unbindCallbacks()
+
+            self.removed = True
 
         def setStyleProperty(self,name, value):
             self.$element.css(name, value)
