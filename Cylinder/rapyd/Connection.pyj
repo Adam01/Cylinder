@@ -2,7 +2,7 @@
 class Observable:
     pass
 
-define(["Observable"], def(Observable):
+define(["BoundObserver"], def(Observable):
 
     class Connection(Observable):
 
@@ -26,7 +26,7 @@ define(["Observable"], def(Observable):
             if callback is not null:
                 rpc_obj.callback_id = self.nextCallbackID
                 self.nextCallbackID += 1
-                self.subscribe(rpc_obj.callback_id, callback)
+                self.subscribe(rpc_obj.callback_id, self, callback)
 
             json_data = JSON.stringify(rpc_obj)
             self.socket.send(json_data)

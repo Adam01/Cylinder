@@ -19,7 +19,7 @@ define(["Observable","utf8"], def(Observable, utf8):
 
             #self.rootNode = EntityNode(None, "~", "d")
 
-            self.connection.subscribe(self.CMD_LISTDIR, self.onDirectoryListing.bind(self, None))
+            self.connection.subscribe(self.CMD_LISTDIR, self, self.onDirectoryListing)
 
         def getConnection(self):
             return self.connection

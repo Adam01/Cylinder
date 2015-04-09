@@ -3,16 +3,35 @@ class Widget:
     @staticmethod
     def getWidgetByID(id):
         pass
-    pass
+    def remove(self):
+        pass
 
 @external
 class DirectoryListRow:
     pass
 
+@external
+class ContextMenu:
+    pass
 
-define(["Widget","Widgets/DirectoryListRow/DirectoryListRow"], main)
+define(["Widget","Widgets/DirectoryListRow/DirectoryListRow", "Widgets/ContextMenu/ContextMenu"], main)
 
-def main(Widget, DirectoryListRow):
+DOMString = \
+"""<div class="DirectoryList ui-widget">
+    <table class="DirectoryListTable ui-widget-content" >
+        <thead class="DirectoryListHeader ui-widget-header ui-corner-all">
+            <tr class="DirectoryListHeaderRow ">
+
+            </tr>
+        </thead>
+
+        <tbody class="DirectoryListBody">
+
+        </tbody>
+    </table>
+</div>"""
+
+def main(Widget, DirectoryListRow, ContextMenu):
 
     class DirectoryList(Widget):
         def __init__(self, parentWidget, fs):
@@ -28,21 +47,32 @@ def main(Widget, DirectoryListRow):
             self.ITEM_DBL_CLICKED = "OnItemDblClick"
             self.ITEM_SELECTED = "OnItemSelection"
 
-            def setup():
-                self.$element.selectable({
-                    filter: ".DirectoryListRow",
-                    stop: self.onItemSelected.bind(self),
-                    cancel: ".ui-selected"
-                })
-                pass
+            def ready():
+                self.contextMenu = ContextMenu(self, ".DirectoryListRow")
+                self.contextMenu.addItems([
+                    {title: "Rename", uiIcon: "ui-icon-pencil"},
+                    {title: "Trash", uiIcon: "ui-icon-trash"},
+                    {title: "Delete", uiIcon: " ui-icon-closethick"},
+                    {title: "Make a copy", cmd: "Copy", uiIcon: "ui-icon-copy"}
+                ])
+                self.subscribeTo(self.contextMenu, self.contextMenu.ITEM_SELECTED, self.onContextMenuSelect)
 
-            self.subscribe(self.LOADED_HTML, setup.bind(self))
+            self.subscribe(self.LOADED_HTML, self, ready)
+
+
+        def getDOMString(self):
+            nonlocal DOMString
+            return DOMString
 
         def getRowByID(self, widgetID):
             for item in self.rows:
                 if item.WidgetID == widgetID:
                     return item
             return None
+
+        def onContextMenuSelect(self, cmd, target):
+            console.log(cmd, target, Widget.getWidgetByID(target.attr("WidgetID")))
+
 
         def onItemSelected(self, ev, ui):
             selected = []
@@ -71,22 +101,13 @@ def main(Widget, DirectoryListRow):
             $head = self.$element.find(".DirectoryListHeaderRow")
             $head.find(".DirectoryListHeaderCell").remove()
 
+            if self.$element.find(".DirectoryListRow").size():
+                self.$element.selectable( "destroy" )
+
             self.$element.find(".DirectoryListBody").html("")
             for row in self.rows:
                 row.remove(False)
             self.rows = []
-
-            """ this is possible
-            remaining = self.$element.find(".DirectoryListTable").find(".DirectoryListRow")
-            for item in remaining:
-                id = $(item).attr("WidgetID")
-                w = Widget.getWidgetByID(id)
-                if w:
-                    w.remove()
-                else:
-                    $(item).remove()
-            """
-
 
 
         def onListDir(self, path, list):
@@ -103,6 +124,8 @@ def main(Widget, DirectoryListRow):
         def redraw(self):
             self.clear()
             $head = self.$element.find(".DirectoryListHeaderRow")
+
+            self.$element.find(".DirectoryListBody").hide()
 
             parentDirectory = {}
 
@@ -121,6 +144,13 @@ def main(Widget, DirectoryListRow):
                 self.addItem(item)
 
             self.$element.find(".DirectoryListTable").colResizable({liveDrag: true, partialRefresh: true, postbackSafe: true, minWidth: 50})
+            self.$element.selectable({
+                    filter: ".DirectoryListRow",
+                    stop: self.onItemSelected.bind(self),
+                    cancel: ".ui-selected",
+                })
+            self.$element.find(".DirectoryListBody").show()
+            #self.contextMenu.reApply()
 
             self.notify(self.UPDATED, self.path)
 
@@ -129,7 +159,7 @@ def main(Widget, DirectoryListRow):
             if self.rows.length == 0 or self.rows[0].cells.length != self.columnFields.length:
                 return self.redraw()
 
-            self.setVisible(False)
+            self.$element.find(".DirectoryListBody").hide()
             self.$element.find(".DirectoryListTable").colResizable({disable: true})
 
             self.rows[0].item.path = self.path + "/.."
@@ -149,8 +179,14 @@ def main(Widget, DirectoryListRow):
 
 
             def reshow():
-                self.setVisible(True)
+                self.$element.find(".DirectoryListBody").show()
                 self.$element.find(".DirectoryListTable").colResizable({liveDrag: true, partialRefresh: true, postbackSafe: true, minWidth: 50})
+                self.$element.selectable({
+                    filter: ".DirectoryListRow",
+                    stop: self.onItemSelected.bind(self),
+                    cancel: ".ui-selected",
+                })
+               # self.contextMenu.reApply()
 
             # Show when last row has loaded
             if last_added is not None:
@@ -163,5 +199,9 @@ def main(Widget, DirectoryListRow):
         def remove(self, removeFromDOM=True):
             self.clear()
             Widget.remove(self, removeFromDOM)
+
+
+
+
 
     return DirectoryList

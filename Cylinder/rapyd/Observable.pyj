@@ -1,62 +1,89 @@
-define(def():
+@external
+class Callbacks:
+    def count(self):
+        pass
+    def remove(self):
+        pass
+
+define(["Callbacks"], def(Callbacks):
 
     class Observable:
         def __init__(self):
             self.__callbacks = {}
             self.__once_callbacks = {}
 
-        def subscribe(self, name, fn):
+        def subscribe(self, name, obj, fn):
             if name not in self.__callbacks:
-                self.__callbacks[name] = $.Callbacks("unique")
+                self.__callbacks[name] = Callbacks(True)
 
-            return self.__callbacks[name].add(fn)
+            return self.__callbacks[name].add(obj,fn)
 
-        def subscribeOnce(self, name, fn):
+        def subscribeOnce(self, name, obj, fn):
             if name not in self.__once_callbacks:
-                self.__once_callbacks[name] = $.Callbacks("unique once")
+                self.__once_callbacks[name] = Callbacks(True)
 
-            return self.__once_callbacks[name].add(fn)
+            return self.__once_callbacks[name].add(obj, fn)
 
         def notify(self, name, *args):
-            console.debug("NOTIFY", name, self, *args)
 
             if name in self.__callbacks:
-                self.__callbacks[name].fire.apply(self, args )
+                self.__callbacks[name].fire.apply(self.__callbacks[name], args)
 
             if name in self.__once_callbacks:
-                self.__once_callbacks[name].fire.apply(self, args)
+                self.__once_callbacks[name].fire.apply(self.__once_callbacks[name], args)
                 del self.__once_callbacks[name]
 
             if "ALL_CALLBACKS" in self.__callbacks:
-                self.__callbacks["ALL_CALLBACKS"].fire.apply(self, [name].concat(args))
+                self.__callbacks["ALL_CALLBACKS"].fire.apply(self.__callbacks["ALL_CALLBACKS"], [name].concat(args))
 
-        def removeFunctionCallbacks(self, fn):
+
+        def __loopBoth(self, cb):
             for name in Object.keys(self.__callbacks):
-                self.__callbacks[name].remove(fn)
-
+                cb(self.__callbacks, name)
             for name in Object.keys(self.__once_callbacks):
-                self.__once_callbacks[name].remove(fn)
+                cb(self.__once_callbacks, name)
 
-        def removeNamedFunctionCallbacks(self, name, fn):
+        def __ifBoth(self, name, cb):
             if name in Object.keys(self.__callbacks):
-                self.__callbacks[name].remove(fn)
-
+                cb(self.__callbacks[name])
             if name in Object.keys(self.__once_callbacks):
-                self.__once_callbacks[name].remove(fn)
+                cb(self.__once_callbacks[name])
 
-        def removeNamedCallbacks(self, name):
-            if name in Object.keys(self.__callbacks):
-                del self.__callbacks[name]
+        def countCallbacks(self, name,obj,fn):
+            objCount = 0
+            fnCount = 0
+            if name is None:
+                self.__loopBoth(def(cb, name):
+                    objs, fns = Callbacks.count(cb[name], obj, fn)
+                    objCount += objs
+                    fnCount += fns
+                )
+            else:
+                self.__ifBoth(name, def(cb):
+                    objs, fns = Callbacks.count(cb, obj,fn)
+                    objCount += objs
+                    fnCount += fns
+                )
 
-            if name in Object.keys(self.__once_callbacks):
-                del self.__once_callbacks[name]
+            return objCount, fnCount
 
-        def removeAllCallbacks(self):
-            for name in Object.keys(self.__callbacks):
-                del self.__callbacks[name]
+        def removeCallbacks(self, name, obj, fn):
+            objCount = 0
+            fnCount = 0
+            if name is None:
+                self.__loopBoth(def(cb, name):
+                    objs, fns = Callbacks.remove(cb[name], obj, fn)
+                    objCount += objs
+                    fnCount += fns
+                )
+            else:
+                self.__ifBoth(name, def(cb):
+                    objs, fns = Callbacks.remove(cb, obj,fn)
+                    objCount += objs
+                    fnCount += fns
+                )
 
-            for name in Object.keys(self.__once_callbacks):
-                del self.__once_callbacks[name]
+            return objCount, fnCount
 
 
     return Observable

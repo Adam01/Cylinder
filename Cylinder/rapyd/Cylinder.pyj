@@ -56,12 +56,12 @@ def main(Widgets, Connection, FileSystemSource, PathUtil):
 
     treeView.subscribeTo(directoryList, directoryList.UPDATED, treeView.activatePath)
 
-    directoryList.subscribe(directoryList.ITEM_DBL_CLICKED, def(row):
+    directoryList.subscribe(directoryList.ITEM_DBL_CLICKED, this, def(row):
         if row.item.type == "file":
             editor.loadFromServer(row.item.path)
     )
 
-    connection.subscribe(connection.AUTHENTICATE, def():
+    connection.subscribe(connection.AUTHENTICATE, this, def():
         fs.getPathSeparator(def(ps):
             PathUtil.setPathSep(ps)
         )
@@ -70,6 +70,8 @@ def main(Widgets, Connection, FileSystemSource, PathUtil):
             directoryList.onListDir(path, list)
         )
     )
+
+
 
 String.prototype.capitalise = def():
     return this.charAt(0).toUpperCase() + this.slice(1)

@@ -1,0 +1,109 @@
+define(def():
+    class BoundCallbacks:
+        def __init__(self, unique=True):
+            self.__obj_fns = []
+            self.__unique = unique
+
+        def addOnce(self, obj, fn):
+            obj_fns = self.__getObjFns(obj, True)
+            if fn in obj_fns[1]:
+                return False
+            else:
+                obj_fns[1].push(fn)
+                return True
+
+        def add(self, obj, fn):
+            if self.__unique:
+                return self.addOnce(obj, fn)
+
+            self.__getObjFns(obj, True)[1].push(fn)
+            return True
+
+        def fire(self, *args):
+            for obj_fns in self.__obj_fns:
+                for fn in obj_fns[1]:
+                    fn.apply(obj_fns[0], args)
+
+        # The following functions take all parameters as optional
+        # Specifying None will exclude the parameter from the filter
+
+        def has(self, obj, fn):
+            if obj is not None:
+                obj_fn = self.__getObjFns(obj)
+                if obj_fn is None:
+                    return False
+                objects = [obj_fn]
+            else:
+                objects = self.__obj_fns
+
+            if fn is None:
+                return True
+
+            for obj_fns in objects:
+                for fn2 in obj_fns[1]:
+                    if fn == fn2:
+                        return True
+
+        def count(self, obj, fn):
+            if obj is not None:
+                obj_fn = self.__getObjFns(obj)
+                if obj_fn is None:
+                    return 0, 0
+                objects = [obj_fn]
+            else:
+                objects = self.__obj_fns
+
+            count = 0
+            for obj_fns in objects:
+                for fn2 in obj_fns[1]:
+                    if fn is None or fn == fn2:
+                        count += 1
+
+            return objects.length, count
+
+        def remove(self, obj, fn):
+            fnCount = 0
+
+            if obj:
+                obj_fns = self.__getObjFns(obj,False)
+                if obj_fns is None:
+                    return 0,0
+                objects = [obj_fns]
+            else:
+                objects = self.__obj_fns
+
+            objsToRemove = []
+
+            if fn is not None:
+                for obj_fns in objects:
+                    while True:
+                        loc = obj_fns[1].indexOf(fn)
+                        if loc == -1:
+                            break
+                        fnCount += 1
+                        obj_fns[1].splice(loc,1)
+
+                    if obj_fns[1].length == 0:
+                        objsToRemove.push(obj_fns)
+            else:
+                objsToRemove = objects
+
+            for obj_fns in objsToRemove:
+                location = self.__obj_fns.indexOf(obj_fns)
+                self.__obj_fns.splice(location , 1 )
+
+            return objsToRemove.length, fnCount
+
+        def __getObjFns(self, obj, create=False):
+            for obj_fns in self.__obj_fns:
+                if obj_fns[0] == obj:
+                    return obj_fns
+            if create:
+                obj_fns = [obj, []]
+                self.__obj_fns.push(obj_fns)
+                return obj_fns
+            return None
+
+
+    return BoundCallbacks
+)

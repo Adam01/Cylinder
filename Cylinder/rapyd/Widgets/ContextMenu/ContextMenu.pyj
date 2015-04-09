@@ -1,6 +1,7 @@
 @external
 class Widget:
-    pass
+    def remove(self):
+        pass
 
 define(["Widget"], main)
 
@@ -8,26 +9,61 @@ def main(Widget):
     class ContextMenu(Widget):
         def __init__(self, parentWidget, delegate ):
             Widget.__init__(self, None, parentWidget)
+            self.delegate = delegate
+            self.ITEM_SELECTED = "OnContextMenuItemSelect"
             self.$container = self.getParent().$element
-            self.$container.contextMenu({
+            self.items = []
+            self.__setup()
+
+        def __setup(self):
+            self.$container.contextmenu({
                 autoFocus: True,
-                delegate: delegate,
+                delegate: self.delegate,
                 hide: False,
-                menu: [],
-                preventContextMenuForPopup: True,
+                menu: self.items,
+                preventContextMenuForPopup: False,
                 preventSelect: True,
                 show: False,
                 tapHold: True,
+                select: self.onItemSelect.bind(self),
+                ignoreParentSelect: True
             })
 
-        def addItem(self, title, callback = None ):
-            cmd = "cmd_" + title
-            self.$container.contextmenu("setEntry", cmd, {
-                action: callback,
-                cmd: cmd,
-                title: title
-            })
+        def reApply(self):
+            self.$container.contextmenu("destroy")
+            self.__setup()
             return self
+
+        def onItemSelect(self, ev, ui):
+            data = {closeMenu: True}
+            self.notify(self.ITEM_SELECTED, ui.cmd, ui.target.closest(self.delegate), data)
+            return data.closeMenu
+
+        def __replaceMenu(self):
+            self.$container.contextmenu("replaceMenu", self.items)
+            return self
+
+        def __correctItem(self, item):
+            if item.cmd is None:
+                item.cmd = item.title
+
+        def addItems(self, items):
+            for item in items:
+                self.__correctItem(item)
+                self.items.push(item)
+            return self.__replaceMenu()
+
+        def replaceItems(self, items):
+            self.items = []
+            for item in items:
+                self.__correctItem(item)
+                self.items.push(item)
+            return self.__replaceMenu()
+
+        def addItem(self, item ):
+            self.__correctItem(item)
+            self.items.push(item)
+            return self.__replaceMenu()
 
         def setItemVisible(self, title, visible):
             cmd = "cmd_" + title
@@ -49,5 +85,10 @@ def main(Widget):
         def close(self):
             self.$container.contextmenu("close")
             return self
+
+        def remove(self):
+            self.$container.contextmenu("destroy")
+            Widget.remove(self)
+
 
     return ContextMenu

@@ -39,7 +39,7 @@ def main(Widget, PathUtil, CodeMirror):
                 setupMenuButton("[name=reload]", "ui-icon-refresh", self.onReloadClicked)
                 setupMenuButton("[name=save]", "ui-icon-disk", self.onSaveClicked)
 
-            self.subscribe(self.LOADED_HTML, setup.bind(self))
+            self.subscribe(self.LOADED_HTML, self, setup)
 
         def onUndoClicked(self):
             self.doc.undo()

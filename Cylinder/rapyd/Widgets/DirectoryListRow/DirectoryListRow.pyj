@@ -24,7 +24,7 @@ def main(Widget, EntityField):
                     self.setFromItem(self.item)
 
 
-            self.subscribe(self.LOADED_HTML, setup.bind(self))
+            self.subscribe(self.LOADED_HTML, self, setup)
 
         def clear(self):
             self.$element.html("")

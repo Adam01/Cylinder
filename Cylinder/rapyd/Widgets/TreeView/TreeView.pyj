@@ -31,7 +31,7 @@ def main (Widget, PathUtil):
                 self.setVisible(True)
 
 
-            self.subscribe(self.LOADED_HTML, setup.bind(self))
+            self.subscribe(self.LOADED_HTML, self, setup)
 
 
         def onItemClick(self, ev, data):

@@ -43,7 +43,7 @@ define(["BoundObserver"], def(BoundObserver):
                     onLoaded()
 
             if widget.parent and widget.parent.$element is None:
-                widget.parent.subscribe(widget.parent.LOADED_HTML, applyMarkup )
+                widget.parent.subscribe(widget.parent.LOADED_HTML, this, applyMarkup )
             else:
                 applyMarkup()
 
@@ -66,10 +66,11 @@ define(["BoundObserver"], def(BoundObserver):
                 return Widgets[id]
             return None
 
+        def getDOMString(self):
+            return '<div></div>'
+
         def __init__(self, sourceName, parentWidget, appendToSelector=None):
             BoundObserver.__init__(self)
-
-            console.log(self)
 
             nonlocal NextWidgetID
             nonlocal Widgets
@@ -82,7 +83,6 @@ define(["BoundObserver"], def(BoundObserver):
 
             self.$element = None
             self.parent = parentWidget
-            self.subscribedTo = []
 
             onLoadedHTML = self.notify.bind(self, self.LOADED_HTML, self)
 
@@ -140,7 +140,7 @@ define(["BoundObserver"], def(BoundObserver):
 
 
             # Break references to dependent subscribers
-            self.removeAllCallbacks()
+            self.removeCallbacks(None,None,None)
 
             # Break references to subjects
             self.unbindCallbacks()
@@ -154,14 +154,19 @@ define(["BoundObserver"], def(BoundObserver):
         def getStyleProperty(self,name):
             return self.$element.css(name)
 
-        def setWidth(self,x):
-            return self.setStyleProperty("width", x)
-
-        def setHeight(self,y):
-            return self.setStyleProperty("height", y)
-
         def getParent(self):
             return self.parent
+
+        def resize(self, x,y):
+            if x is not None:
+                self.setStyleProperty("width", x)
+            if y is not None:
+                self.setStyleProperty("height", y)
+            return self
+
+        def getSize(self):
+            return self.getStyleProperty("width"), self.getStyleProperty("height")
+
 
     return Widget
 )

@@ -1,7 +1,7 @@
 import os
 
-os.system('rapydscript -p --screw-ie8 rapyd/NamedCallbacks.pyj tests/test_NamedCallbacks.pyj -o tests/js/test_NamedCallbacks.js' )
-os.system('node tests/js/test_Namedcallbacks.js')
+os.system('rapydscript -p --screw-ie8 rapyd/Observable.pyj tests/test_Observable.pyj -o tests/js/test_Observable.js' )
+os.system('node tests/js/test_Observable.js')
 """
 
 script_list = list()

@@ -7,7 +7,7 @@
   }
 
   &.FileEntity, &.DirectoryEntity {
-    &:hover {
+    &:hover, &.ui-selected {
       background-color: lightblue;
     }
   }

@@ -1,7 +1,7 @@
 import unittest
 
 @external
-class NamedCallbacks:
+class Observable:
     pass
 
 
@@ -22,7 +22,7 @@ class TestNamedCallbacks(unittest.TestCase):
         otherFunc = def():
             self.assertTrue(false, "This should not have been called!")
 
-        cb = NamedCallbacks()
+        cb = Observable()
         cb.subscribe("Test", myfunc)
         cb.subscribe("Nope", otherFunc)
 

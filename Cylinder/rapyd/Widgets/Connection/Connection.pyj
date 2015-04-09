@@ -10,14 +10,13 @@ define(["Widget"], def(Widget):
             self.connection = connection
 
             def setup():
-                console.log("Settig up connection widget")
                 self.$username = self.$element.find("#ConnectionUsername")
                 self.$password = self.$element.find("#ConnectionPassword")
                 self.$address = self.$element.find("#ConnectionAddress")
                 self.$status = self.$element.find("#ConnectionStatus")
                 self.$element.find("#ConnectButton").click(self.onStartConnect.bind(self))
 
-            self.subscribe(self.LOADED_HTML, setup.bind(self))
+            self.subscribe(self.LOADED_HTML, self, setup)
 
             self.subscribeTo(self.connection, self.connection.CONNECT, self.onConnect)
             self.subscribeTo(self.connection, self.connection.AUTHENTICATE, self.onAuth)
