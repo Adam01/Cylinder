@@ -20,6 +20,9 @@ def main (Widget, PathUtil):
             self.collapse_inactive = True
             self.show_files = False
 
+            self.showSystem = False
+            self.showHidden = True
+
             def setup():
                 self.$element.fancytree({
                     expand: self.onItemExpand.bind(self),
@@ -123,6 +126,10 @@ def main (Widget, PathUtil):
             for entity in list:
                 if not self.show_files and entity.type == "file":
                     continue
+                if not self.showSystem and entity.owner == "SYSTEM":
+                    continue
+                if not self.showHidden and entity.title.startsWith("."):
+                    continue
                 nodes.push(self.toFancyTreeNode(entity))
             return nodes
 
@@ -133,11 +140,14 @@ def main (Widget, PathUtil):
             node.data.type = entity.type
             node.data.path = entity.path
             node.folder = entity.type == "directory" ? True : False
+            node.iconClass = entity.type == "directory" ? "ui-icon ui-icon-folder-collapsed" : "ui-icon ui-icon-document"
             node.key = entity.path
+
             if node.folder:
                 node.children = []
                 node.expanded = False
                 node.lazy = True
+
             return node
 
         def toFancyTree(self, path, list):

@@ -43,10 +43,14 @@ def main(Widget, PathUtil):
                     elif e.keyCode == 27:
                         self.setValue(self.previousValue)
                         self.$element.blur()
+                )
+
+                self.$element.keypress(def(e):
                     char = String.fromCharCode( e.charCode ? e.charCode : e.which )
                     if char == PathUtil.getSep():
                         e.preventDefault()
                 )
+
                 self.$element.blur(def(e):
                     self.__onEditComplete()
                 )
@@ -120,6 +124,33 @@ def main(Widget, PathUtil):
         def getFormat(self):
             return self.format
 
+    class SizeField(EntityField):
+        def __init__(self, parentWidget, name=None, value=None, selector=None):
+            EntityField.__init__(self,parentWidget,name,selector)
+            self.val = value
+            def setup():
+                if value:
+                    self.setValue(value)
+            self.subscribe(self.LOADED_HTML, self, setup)
+
+        def setValue(self, bytes):
+            if bytes == null:
+                self.$element.text("")
+            else:
+                f = parseFloat(bytes)
+                if bytes > 1000000000:
+                    self.$element.text((f/1000000000).toFixed(2) + " GB")
+                elif bytes > 1000000:
+                    self.$element.text((f/1000000).toFixed(2) + " MB")
+                elif bytes > 1000:
+                    self.$element.text((f/1000).toFixed(2) + " KB")
+                else:
+                    self.$element.text(bytes + " B")
+
+            self.val = bytes
+
+        def getValue(self):
+            return self.val
 
     # Static field
     class TextField(EntityField):
@@ -131,6 +162,8 @@ def main(Widget, PathUtil):
 
             self.subscribe(self.LOADED_HTML, self, setup)
 
+
+
     @external
     class defaultType:
         pass
@@ -141,6 +174,8 @@ def main(Widget, PathUtil):
             return TitleField(parent, type, value, selector)
         elif type in ["accessed", "modified", "created"]:
             return DateTimeField(parent, type, value,selector)
+        elif type == "size":
+            return SizeField(parent, type, value, selector)
         elif defaultType:
             return defaultType(parent, type, value, selector)
         else:
@@ -150,5 +185,6 @@ def main(Widget, PathUtil):
         "TitleField": TitleField,
         "DateTimeField": DateTimeField,
         "TextField": TextField,
+        "SizeField": SizeField,
         "FieldFactory": FieldFactory
     }

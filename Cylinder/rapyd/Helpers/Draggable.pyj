@@ -16,8 +16,9 @@ def main(Widget):
 
 
         def __createHelper(self):
-            container = $("<div></div>")
+            container = $("<div class='.DraggableHelper'></div>")
             container.append( $(".ui-selected").clone() )
+            container.data("selected" , self.selectable.find(".ui-selected"))
             return container.get(0)
 
         def __fixSelectableMouseDown(self, ev):

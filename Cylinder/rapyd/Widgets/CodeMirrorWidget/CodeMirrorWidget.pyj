@@ -31,7 +31,7 @@ def main(Widget, PathUtil, CodeMirror):
             def setup():
                 CodeMirror.modeURL = "../codemirror/mode/%N/%N"
                 self.codemirror = CodeMirror( self.$element.find(".CodeMirrorEditor").get(0), {lineNumbers: true} )
-                self.codemirror.setSize("100%", "30em");
+                self.codemirror.setSize("100%", 600);
                 self.doc = self.codemirror.getDoc()
                 self.menu = self.$element.find(".CodeMirrorMenu")
                 setupMenuButton("[name=undo]", "ui-icon-arrowreturn-1-w", self.onUndoClicked)
@@ -40,6 +40,13 @@ def main(Widget, PathUtil, CodeMirror):
                 setupMenuButton("[name=save]", "ui-icon-disk", self.onSaveClicked)
 
             self.subscribe(self.LOADED_HTML, self, setup)
+
+        def resize(self, x=None,y=None):
+            if y is not None:
+                headerFooterSize = self.$element.find(".CodeMirrorMenu").height()
+                headerFooterSize += self.$element.find(".CodeMirrorFooter").height()
+                self.codemirror.setSize("100%", y - headerFooterSize)
+            Widget.resize(self, x,y)
 
         def onUndoClicked(self):
             self.doc.undo()

@@ -1,9 +1,9 @@
 .DirectoryListRow {
   &.FileEntity {
-    background-color: lavender;
+    //background-color: lavender;
   }
   &.DirectoryEntity {
-    background-color: khaki;
+    //background-color: khaki;
   }
 
   &.FileEntity, &.DirectoryEntity {
@@ -11,6 +11,20 @@
       background-color: lightblue;
     }
   }
+
+  .FSIcon {
+    float: left;
+    padding-right: 1em;
+  }
+
+  &.DropAvailable {
+    outline: solid white 1px;
+  }
+
+  &.DropHover {
+    outline: dashed blue 1px;
+  }
+
   border-collapse: collapse;
   border-bottom: none;
   cursor: pointer;

@@ -48,19 +48,31 @@ def main(Widget, DirectoryListRow, ContextMenu, PathUtil):
             self.UPDATED = "OnUpdate"
             self.ITEM_DBL_CLICKED = "OnItemDblClick"
             self.ITEM_SELECTED = "OnItemSelection"
+            self.DIRECTORY_OPENED = "OnOpenDirectory"
+            self.EDIT_FILE = "OnEditFile"
+
+            self.showSystem = False
+            self.showHidden = True
 
             def ready():
                 self.contextMenu = ContextMenu(self, ".DirectoryListRow", ".DirectoryListBody")
                 self.contextMenu.addItems([
-                    {title: "Create a file", cmd: "CreateFile", uiIcon: "ui-icon-document"},
-                    {title: "Create a directory", cmd: "CreateDir", uiIcon: "ui-icon-folder-collapsed"},
-                    {title: "Rename", uiIcon: "ui-icon-pencil"},
+                    {title:"Open", uiIcon: "ui-icon-folder-open"},
+                    {title:"Edit", uiIcon: "ui-icon-pencil"},
+                    {title: "Rename", uiIcon: "ui-icon-tag"},
                     {title: "Archive", uiIcon: "ui-icon-trash"},
                     {title: "Delete", uiIcon: " ui-icon-closethick"},
-                    {title: "Make a copy", cmd: "Copy", uiIcon: "ui-icon-copy"}
+                    {title: "Make a copy", cmd: "Copy", uiIcon: "ui-icon-copy"},
+                    {title: "Create a file", cmd: "CreateFile", uiIcon: "ui-icon-document"},
+                    {title: "Create a directory", cmd: "CreateDir", uiIcon: "ui-icon-folder-open"}
                 ])
                 self.subscribeTo(self.contextMenu, self.contextMenu.ITEM_SELECTED, self.onContextMenuSelect)
-                self.subscribeTo(self.contextMenu, self.contextMenu.BEFORE_OPEN, self.onContentMenuOpen)
+                self.subscribeTo(self.contextMenu, self.contextMenu.BEFORE_OPEN, self.onContextMenuOpen)
+
+                """self.$element.find(".DirectoryListTable").floatThead({
+                    scrollContainer: def($table):
+                        return $table.closest("DirectoryListTableWrapper")
+                })"""
 
             self.subscribe(self.LOADED_HTML, self, ready)
 
@@ -75,7 +87,7 @@ def main(Widget, DirectoryListRow, ContextMenu, PathUtil):
                     return item
             return None
 
-        def onContentMenuOpen(self, target):
+        def onContextMenuOpen(self, target):
             if not target.hasClass("ui-selected"):
                 selected = []
             else:
@@ -86,18 +98,24 @@ def main(Widget, DirectoryListRow, ContextMenu, PathUtil):
                 "Delete": True,
                 "CreateFile": True,
                 "CreateDir": True,
-                "Copy": True
+                "Copy": True,
+                "Edit": True,
+                "Open": True
             }
 
             if selected.length == 0: #somehow...
                 # Add, etc...
-                items.Rename = items.Archive = items.Delete = items.Copy = False
+                items.Rename = items.Archive = items.Delete = items.Copy = items.Open = items.Edit = False
             elif selected.length == 1:
                 # Rename, Archive, Delete...
-                pass
+                items.CreateDir = items.CreateFile = False
+                if selected[0].item.type == "directory":
+                    items.Edit = False
+                else:
+                    items.Open = False
             elif selected.length > 1:
                 # Multi ops, Archive, Delete...
-                items.Rename = False
+                items.Rename = items.CreateFile = items.CreateDir = items.Open = items.Edit = False
 
             for name in Object.keys(items):
                 self.contextMenu.setItemVisible(name, items[name])
@@ -122,14 +140,16 @@ def main(Widget, DirectoryListRow, ContextMenu, PathUtil):
                 pass
             elif cmd == "Copy":
                 pass
-
-        def onItemSelected(self, ev, ui):
-            self.notify(self.ITEM_SELECTED, self.getSelectedRows())
+            elif cmd == "Open":
+                self.fetchDir(w.item.path)
+                self.notify(self.DIRECTORY_OPENED, w.item.path)
+            elif cmd == "Edit":
+                self.notify(self.EDIT_FILE, w.item.path)
 
         def getSelectedRows(self):
             selected = []
-            self.$element.find(".DirectoryListRow.ui-selected").each(def():
-                selected.push( self.getRowByID( $(this).attr("WidgetID") ) )
+            self.$element.find(".DirectoryListRow.ui-selected").each(def(i,val):
+                selected.push( self.getRowByID( parseInt( $(val).attr("WidgetID") ) ) )
             )
             return selected
 
@@ -144,8 +164,10 @@ def main(Widget, DirectoryListRow, ContextMenu, PathUtil):
 
         def onRowDblClick(self, row, ev):
             if row.item.type == "directory":
+                self.notify(self.DIRECTORY_OPENED, row.item.path)
                 self.fetchDir(row.item.path)
-            self.notify(self.ITEM_DBL_CLICKED, row)
+            else:
+                self.notify(self.EDIT_FILE, row.item.path)
 
         def __onRenameResponse(self, row, field, res, source, target):
             if res:
@@ -154,6 +176,7 @@ def main(Widget, DirectoryListRow, ContextMenu, PathUtil):
                 field.setEditable(False)
             else:
                 field.setValue(row.item.title)
+                field.setEditable(False)
 
 
         def onFieldChange(self,row, field, name, value):
@@ -202,11 +225,17 @@ def main(Widget, DirectoryListRow, ContextMenu, PathUtil):
                 self.$element.find(".DirectoryListTable").colResizable({liveDrag: true, partialRefresh: true, postbackSafe: true, minWidth: 50})
                 self.$element.find(".DirectoryListBody").selectable({
                         filter: ".DirectoryListRow",
-                        stop: self.onItemSelected.bind(self),
                         cancel: ".ui-selected",
                     })
                 self.helpersAdded = True
                 # self.contextMenu.reApply()
+
+        def canAdd(self, item):
+            if not self.showSystem and item.owner == "SYSTEM":
+                return False
+            if not self.showHidden and item.title.startsWith("."):
+                return False
+            return True
 
         def redraw(self):
             self.clear()
@@ -228,7 +257,8 @@ def main(Widget, DirectoryListRow, ContextMenu, PathUtil):
             self.addItem(parentDirectory)
 
             for item in self.list:
-                self.addItem(item)
+                if self.canAdd(item):
+                    self.addItem(item)
 
             self.__attachHelpers()
             self.$element.find(".DirectoryListBody").show()
@@ -249,11 +279,12 @@ def main(Widget, DirectoryListRow, ContextMenu, PathUtil):
             row_count = self.rows.length
             last_added = None
             for item in self.list:
-                if row_i >= row_count:
-                    last_added = self.addItem(item)
-                else:
-                    self.rows[row_i].updateFromItem(item)
-                row_i += 1
+                if self.canAdd(item):
+                    if row_i >= row_count:
+                        last_added = self.addItem(item)
+                    else:
+                        self.rows[row_i].updateFromItem(item)
+                    row_i += 1
             while row_i < row_count:
                 self.rows[row_i].remove()
                 self.rows.splice(row_i,1)

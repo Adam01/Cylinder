@@ -28,8 +28,9 @@ define(["Observable","utf8","PathUtil"], def(Observable, utf8, PathUtil):
         def onMovedEntity(self, cb, response):
             if response.status != "Completed" or response.result is False:
                 console.log("Unable to move entity", response)
-
-            if cb:
+                if cb:
+                    cb(False, None,None)
+            elif cb:
                 cb(response.result, response.data.source, response.data.target)
 
         def moveEntity(self, path, newPath, cb=None):

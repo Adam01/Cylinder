@@ -1,5 +1,8 @@
 @external
 class Widget:
+    @staticmethod
+    def getWidgetByID():
+        pass
     pass
 
 @external
@@ -18,6 +21,7 @@ def main(Widget, EntityField, Draggable):
 
             self.item = item
             self.cells = []
+            self.iconElement = None
 
             def setup():
 
@@ -26,12 +30,33 @@ def main(Widget, EntityField, Draggable):
 
                 self.draggable = Draggable(self, parentWidget.$element.find(".DirectoryListBody"))
 
+                self.$element.droppable({
+                    accept: "",
+                    activeClass: "DropAvailable",
+                    hoverClass: "DropHover",
+                    drop: self.__onDrop.bind(self),
+                    tolerance: "pointer"
+                })
+
                 if self.item:
                     self.setFromItem(self.item)
 
 
             self.subscribe(self.LOADED_HTML, self, setup)
 
+        def getItem(self):
+            return self.item
+
+        def __onDrop(self,ev,ui):
+            paths = []
+            selected = ui.helper.data("selected")
+            selected.each(def(i,element):
+                w = Widget.getWidgetByID($(element).attr("WidgetID"))
+                if w is not None and w.getItem is not undefined:
+                    paths.push(w.getItem().path)
+            )
+            console.log("Stuff dropped on", self.item.title, paths)
+            pass
 
         def getCellByColumnName(self, name):
             cell_i = 0
@@ -48,15 +73,28 @@ def main(Widget, EntityField, Draggable):
                 cell.remove(False)
             self.cells = []
 
+        def specialise(self):
+            self.$element.removeClass("FileEntity")
+            self.$element.removeClass("DirectoryEntity")
+            self.$element.addClass( self.item.type.capitalise() + "Entity")
+
+            if self.item.type == "directory":
+                self.$element.droppable("option", "accept", ".FSEntity")
+                self.iconElement.addClass("ui-icon-folder-collapsed")
+                self.iconElement.removeClass("ui-icon-document")
+            else:
+                self.$element.droppable("option", "accept", "")
+                self.iconElement.removeClass("ui-icon-folder-collapsed")
+                self.iconElement.addClass("ui-icon-document")
+
+
         def setFromItem(self, item):
             self.clear()
             self.item = item
             for column in self.parent.columnFields:
                 self.addCell(column, self.item[column])
 
-            self.$element.removeClass("FileEntity")
-            self.$element.removeClass("DirectoryEntity")
-            self.$element.addClass( self.item.type.capitalise() + "Entity")
+            self.specialise()
 
         def updateFromItem(self, item):
             if self.parent.columnFields.length != self.cells.length:
@@ -68,9 +106,7 @@ def main(Widget, EntityField, Draggable):
                 self.cells[cell_i].setValue(self.item[column])
                 cell_i += 1
 
-            self.$element.removeClass("FileEntity")
-            self.$element.removeClass("DirectoryEntity")
-            self.$element.addClass( self.item.type.capitalise() + "Entity")
+            self.specialise()
 
 
         def onFieldChange(self, field, name, value):
@@ -79,6 +115,10 @@ def main(Widget, EntityField, Draggable):
 
         def addCell(self, column, name):
             td = $("<td class='DirectoryListCell'></td>")
+            if self.cells.length == 0:
+                self.iconElement = $("<span class='FSIcon ui-icon'></span>")
+                td.append(self.iconElement)
+
             self.$element.append(td)
             if column == "title" and self.item.type == "directory" and self.item.title == "..":
                 #Make the factory default to text field
