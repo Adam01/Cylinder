@@ -1,7 +1,12 @@
 define( def():
     pathSep = "/"
     def setPathSep(ls):
+        console.log("set path sep to " + ls)
+        nonlocal pathSep
         pathSep = ls
+
+    def getPathSep():
+        return pathSep
 
     def explode(path, processSpecial):
         pathArr = path.split(pathSep)
@@ -10,7 +15,10 @@ define( def():
             if data.length:
                 if processSpecial:
                     if data == ".":  continue
-                    if data == "..": continue
+                    if data == "..":
+                        if pathClean.length:
+                            pathClean.pop()
+                        continue
                 pathClean.push(data)
         return pathClean
 
@@ -49,5 +57,5 @@ define( def():
         def clone(self):
             return new Path(self.path);
 
-    return {"Path": Path, "explode": explode, "join": join, "setPathSep": setPathSep}
+    return {"Path": Path, "explode": explode, "join": join, "setPathSep": setPathSep, "getSep": getPathSep}
 )

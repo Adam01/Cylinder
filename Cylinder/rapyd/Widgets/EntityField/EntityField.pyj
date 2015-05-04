@@ -2,9 +2,9 @@
 class Widget:
     pass
 
-define(["Widget"], main)
+define(["Widget", "PathUtil"], main)
 
-def main(Widget):
+def main(Widget, PathUtil):
 
     class EntityField(Widget):
 
@@ -29,20 +29,55 @@ def main(Widget):
     # Editable field
     class TitleField(EntityField):
 
-        def __init__(self, parentWidget, name=None, value=None, selector=None):
+        def __init__(self, parentWidget, name=None, value=None, selector=None, Editable=False):
             EntityField.__init__(self, parentWidget, name, selector)
             def setup():
                 el = $("<input type='text'></input>")
                 self.$element.append(el)
                 self.$element = el
+                self.previousValue = None
+
+                self.$element.keydown(def(e):
+                    if e.keyCode == 13:
+                        self.$element.blur()
+                    elif e.keyCode == 27:
+                        self.setValue(self.previousValue)
+                        self.$element.blur()
+                    char = String.fromCharCode( e.charCode ? e.charCode : e.which )
+                    if char == PathUtil.getSep():
+                        e.preventDefault()
+                )
+                self.$element.blur(def(e):
+                    self.__onEditComplete()
+                )
 
                 if value:
                     self.setValue(value)
 
+                self.setEditable(Editable)
+
             self.subscribe(self.LOADED_HTML, self, setup)
+
+        def __onEditComplete(self):
+            if self.previousValue != self.getValue():
+                self.notify(self.VALUE_CHANGED, self.getName(), self.getValue())
 
         def setValue(self, value):
             self.$element.val(value)
+
+        def setFocus(self):
+            self.$element.focus()
+
+        def setEditable(self, b):
+            if b:
+                self.previousValue = self.getValue()
+                self.$element.removeAttr("disabled")
+                self.$element.css("user-select", "text")
+            else:
+                self.previousValue = None
+                self.$element.attr("disabled","disabled")
+                self.$element.css("user-select", "none")
+
 
         def getValue(self):
             return self.$element.val()
@@ -51,10 +86,11 @@ def main(Widget):
     # DateTime field
     # Converts timestamp to specified format
     class DateTimeField(EntityField):
-        def __init__(self, parentWidget, name=None, timestamp=None, selector=None, format="dd/MM/yyyy HH:mm:ss"):
+        def __init__(self, parentWidget, name=None, timestamp=None, selector=None, dateFormat="dd/MM/yyyy", timeFormat="HH:mm:ss"):
             EntityField.__init__(self, parentWidget, name, selector)
 
-            self.format = format
+            self.dateFormat = dateFormat
+            self.timeFormat = timeFormat
 
             def setup():
                 if timestamp:
@@ -63,7 +99,12 @@ def main(Widget):
             self.subscribe(self.LOADED_HTML, self, setup)
 
         def _update(self):
-            self.$element.text( $.format.date( Math.round(self.value*1000) , self.format) )
+            now = Date.now()
+            t = Math.floor(self.value*1000)
+            if now-t > 60*60*23*1000:
+                self.$element.text( $.format.date( t , self.dateFormat + " " + self.timeFormat) )
+            else:
+                self.$element.text( $.format.date( t , self.timeFormat) )
 
         def setValue(self, value):
             self.value = value

@@ -2,9 +2,13 @@
 class Widget:
     pass
 
-define(["Widget", "Widgets/EntityField/EntityField"], main)
+@external
+class Draggable:
+    pass
 
-def main(Widget, EntityField):
+define(["Widget", "Widgets/EntityField/EntityField", "Helpers/Draggable"], main)
+
+def main(Widget, EntityField, Draggable):
     class DirectoryListRow(Widget):
         def __init__(self, parentWidget, item):
             Widget.__init__(self, "DirectoryListRow", parentWidget, ".DirectoryListBody")
@@ -20,11 +24,23 @@ def main(Widget, EntityField):
                 self.$element.dblclick(self.notify.bind(self, self.DBL_CLICKED, self))
                 self.$element.click(self.notify.bind(self, self.CLICKED, self))
 
+                self.draggable = Draggable(self, parentWidget.$element.find(".DirectoryListBody"))
+
                 if self.item:
                     self.setFromItem(self.item)
 
 
             self.subscribe(self.LOADED_HTML, self, setup)
+
+
+        def getCellByColumnName(self, name):
+            cell_i = 0
+            for column in self.parent.columnFields:
+                if column == name:
+                    break;
+                cell_i += 1
+            if cell_i < self.cells.length:
+                return self.cells[cell_i]
 
         def clear(self):
             self.$element.html("")
@@ -59,6 +75,7 @@ def main(Widget, EntityField):
 
         def onFieldChange(self, field, name, value):
             self.notify(self.FIELD_CHANGED, field, name, value)
+
 
         def addCell(self, column, name):
             td = $("<td class='DirectoryListCell'></td>")

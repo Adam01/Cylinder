@@ -1,0 +1,64 @@
+@external
+class Widget:
+    def remove(self):
+        pass
+
+define(["Widget"], main)
+
+def main(Widget):
+    class Draggable(Widget):
+        def __init__(self, parentWidget, selectableContainer=None ):
+            Widget.__init__(self, None, parentWidget)
+            self.selectable = selectableContainer
+            self.applied = False
+            self.attach()
+            self.bindedSelectableMouseDown = None
+
+
+        def __createHelper(self):
+            container = $("<div></div>")
+            container.append( $(".ui-selected").clone() )
+            return container.get(0)
+
+        def __fixSelectableMouseDown(self, ev):
+            el = $(ev.currentTarget)
+            if el.hasClass("ui-selectee"):
+                if not el.hasClass("ui-selected"):
+                    if not ev.ctrlKey:
+                        self.selectable.find(".ui-selectee").removeClass("ui-selected")
+                    el.addClass("ui-selected")
+
+        def attach(self):
+            if self.applied:
+                return
+
+            self.getParent().$element.draggable({
+                distance: 10,
+                helper: self.__createHelper.bind(self),
+                cancel: "",
+                opacity: 0.8
+            })
+
+            self.bindedSelectableMouseDown = self.__fixSelectableMouseDown.bind(self)
+
+            if self.selectable is not None:
+                self.getParent().$element.mousedown( self.bindedSelectableMouseDown )
+
+            self.applied = True
+            return self
+
+        def detach(self):
+            if not self.applied:
+                return
+            self.getParent().$element.off("mousedown", self.selectable, self.bindedSelectableMouseDown)
+            self.bindedSelectableMouseDown = None
+            self.getParent().$element.draggable("destroy")
+            self.applied = False
+            return self
+
+        def remove(self):
+            self.detach()
+            Widget.remove(self)
+
+
+    return Draggable

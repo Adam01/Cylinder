@@ -7,11 +7,13 @@ define(["Widget"], main)
 
 def main(Widget):
     class ContextMenu(Widget):
-        def __init__(self, parentWidget, delegate ):
+        def __init__(self, parentWidget, delegate, container=None ):
             Widget.__init__(self, None, parentWidget)
             self.delegate = delegate
             self.ITEM_SELECTED = "OnContextMenuItemSelect"
             self.$container = self.getParent().$element
+            if container is not None:
+                self.$container = self.$container.find(container)
             self.items = []
             self.__setup()
 
@@ -26,6 +28,7 @@ def main(Widget):
                 show: False,
                 tapHold: True,
                 select: self.onItemSelect.bind(self),
+                beforeOpen: self.beforeOpen.bind(self),
                 ignoreParentSelect: True
             })
 
@@ -33,6 +36,12 @@ def main(Widget):
             self.$container.contextmenu("destroy")
             self.__setup()
             return self
+
+
+        def beforeOpen(self, ev, ui):
+            data = { open: True }
+            self.notify(self.BEFORE_OPEN, ui.target.closest(self.delegate), data)
+            return data.open
 
         def onItemSelect(self, ev, ui):
             data = {closeMenu: True}
@@ -44,7 +53,7 @@ def main(Widget):
             return self
 
         def __correctItem(self, item):
-            if item.cmd is None:
+            if item.cmd == undefined or item.cmd is None:
                 item.cmd = item.title
 
         def addItems(self, items):
@@ -65,13 +74,11 @@ def main(Widget):
             self.items.push(item)
             return self.__replaceMenu()
 
-        def setItemVisible(self, title, visible):
-            cmd = "cmd_" + title
+        def setItemVisible(self, cmd, visible):
             self.$container.contextmenu("showEntry", cmd, visible)
             return self
 
-        def setItemEnabled(self, title, enable):
-            cmd = "cmd_" + title
+        def setItemEnabled(self, cmd, enable):
             self.$container.contextmenu("enableEntry", cmd, enable)
             return self
 

@@ -6,7 +6,7 @@
 class Observable:
     pass
 
-define(["Observable","utf8"], def(Observable, utf8):
+define(["Observable","utf8","PathUtil"], def(Observable, utf8, PathUtil):
 
     class FileSystemSource(Observable):
         def __init__(self, connection):
@@ -16,6 +16,7 @@ define(["Observable","utf8"], def(Observable, utf8):
             self.CMD_GETPATHSEP = "get_path_separator"
             self.CMD_FETCHCONTENTS = "get_file_contents"
             self.CMD_SETCONTENTS = "set_file_contents"
+            self.CMD_MOVEENTITY = "move_entity"
 
             #self.rootNode = EntityNode(None, "~", "d")
 
@@ -24,6 +25,24 @@ define(["Observable","utf8"], def(Observable, utf8):
         def getConnection(self):
             return self.connection
 
+        def onMovedEntity(self, cb, response):
+            if response.status != "Completed" or response.result is False:
+                console.log("Unable to move entity", response)
+
+            if cb:
+                cb(response.result, response.data.source, response.data.target)
+
+        def moveEntity(self, path, newPath, cb=None):
+            self.connection.sendCommand(self.CMD_MOVEENTITY,
+                                        {source: path, target: newPath},
+                                        self.onMovedEntity.bind(self,cb))
+
+        def renameEntity(self, path, newName, cb=None):
+            parentDir = PathUtil.explode(path)
+            parentDir.pop()
+            newPath = parentDir.join("/") + "/" + newName
+            self.moveEntity(path, newPath, cb)
+
         def onPathSep(self, cb, response):
             if response.status != "Completed" or response.result is False:
                 console.log("Unable to get path separator: ", response)
@@ -31,7 +50,9 @@ define(["Observable","utf8"], def(Observable, utf8):
                 cb(response.data)
 
         def getPathSeparator(self,cb):
-            self.connection.sendCommand(self.CMD_GETPATHSEP, {}, self.onPathSep.bind(self, cb))
+            self.connection.sendCommand(self.CMD_GETPATHSEP,
+                                        {},
+                                        self.onPathSep.bind(self, cb))
 
         def onDirectoryListing(self, cb, response):
             if response.status != "Completed" or response.result is False:

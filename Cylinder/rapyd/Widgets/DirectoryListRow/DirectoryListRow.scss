@@ -19,7 +19,7 @@
 }
 
 .DirectoryListCell {
-  div, input {
+  div, input, input[disabled] {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -49,7 +49,7 @@
     box-shadow: none;
     -webkit-box-shadow: none;
     background-color: inherit;
-
+    min-width: 1em;
     width: 100%;
 
     /* Inherit the parent element's typography */
