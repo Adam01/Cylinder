@@ -8,7 +8,7 @@ define(["Widget"], def(Widget):
             Widget.__init__(self, None, parent)
             self.$element = $(selector)
             self.$element.attr("WidgetID",self.WidgetID)
-            self.$element.resize(self.onResize.bind(self))
+            self.$element.resize(self.onResize)
 
         def onResize(self):
             self.notify(self.RESIZE, self.$element.width(), self.$element.height())

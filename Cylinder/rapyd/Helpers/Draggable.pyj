@@ -35,12 +35,12 @@ def main(Widget):
 
             self.getParent().$element.draggable({
                 distance: 10,
-                helper: self.__createHelper.bind(self),
+                helper: self.__createHelper,
                 cancel: "",
                 opacity: 0.8
             })
 
-            self.bindedSelectableMouseDown = self.__fixSelectableMouseDown.bind(self)
+            self.bindedSelectableMouseDown = self.__fixSelectableMouseDown
 
             if self.selectable is not None:
                 self.getParent().$element.mousedown( self.bindedSelectableMouseDown )

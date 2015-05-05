@@ -27,8 +27,8 @@ def main(Widget):
                 preventSelect: True,
                 show: False,
                 tapHold: True,
-                select: self.onItemSelect.bind(self),
-                beforeOpen: self.beforeOpen.bind(self),
+                select: self.onItemSelect,
+                beforeOpen: self.beforeOpen,
                 ignoreParentSelect: True
             })
 

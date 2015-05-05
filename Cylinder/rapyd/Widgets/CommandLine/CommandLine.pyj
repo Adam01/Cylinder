@@ -13,7 +13,7 @@ define(["Widget"], def(Widget):
                 self.$inputCmd = self.$element.find("#inputCmd")
                 self.$inputArgs = self.$element.find("#inputArgs")
                 self.$output = self.$element.find("#Output")
-                self.$element.find("#SendButton").click(self.onSendCommand.bind(self))
+                self.$element.find("#SendButton").click(self.onSendCommand)
 
             self.subscribe(self.LOADED_HTML, self, setup)
             self.subscribeTo(self.connection,"ALL_CALLBACKS", self.onResponse)

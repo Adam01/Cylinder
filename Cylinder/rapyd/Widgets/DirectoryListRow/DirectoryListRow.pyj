@@ -25,8 +25,8 @@ def main(Widget, EntityField, Draggable):
 
             def setup():
 
-                self.$element.dblclick(self.notify.bind(self, self.DBL_CLICKED, self))
-                self.$element.click(self.notify.bind(self, self.CLICKED, self))
+                self.$element.dblclick(self.notify.partial(self.DBL_CLICKED, self))
+                self.$element.click(self.notify.partial(self.CLICKED, self))
 
                 self.draggable = Draggable(self, parentWidget.$element.find(".DirectoryListBody"))
 
@@ -34,7 +34,7 @@ def main(Widget, EntityField, Draggable):
                     accept: "",
                     activeClass: "DropAvailable",
                     hoverClass: "DropHover",
-                    drop: self.__onDrop.bind(self),
+                    drop: self.__onDrop,
                     tolerance: "pointer"
                 })
 

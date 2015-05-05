@@ -14,7 +14,7 @@ define(["Widget"], def(Widget):
                 self.$password = self.$element.find("#ConnectionPassword")
                 self.$address = self.$element.find("#ConnectionAddress")
                 self.$status = self.$element.find("#ConnectionStatus")
-                self.$element.find("#ConnectButton").click(self.onStartConnect.bind(self))
+                self.$element.find("#ConnectButton").click(self.onStartConnect)
 
             self.subscribe(self.LOADED_HTML, self, setup)
 

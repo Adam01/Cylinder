@@ -25,8 +25,8 @@ def main (Widget, PathUtil):
 
             def setup():
                 self.$element.fancytree({
-                    expand: self.onItemExpand.bind(self),
-                    click: self.onItemClick.bind(self),
+                    expand: self.onItemExpand,
+                    click: self.onItemClick,
                     lazyLoad: def(e,d):
                         d.result = []
                 })
@@ -42,7 +42,7 @@ def main (Widget, PathUtil):
                 self.notify(self.ITEM_CLICKED, data.node)
 
         def fetchNodeContents(self, node):
-            self.fs.fetchDirectory(node.data.path, self.onListNodeDir.bind(self, node))
+            self.fs.fetchDirectory(node.data.path, self.onListNodeDir.partial(node))
 
         def findInNodeList(self, list, key):
             for node in list:

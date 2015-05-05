@@ -72,9 +72,13 @@ def main(Widgets, Connection, FileSystemSource, PathUtil):
     )
 
 
-
-
-
 String.prototype.capitalise = def():
     return this.charAt(0).toUpperCase() + this.slice(1)
+
+Function.prototype.partial = def(*args):
+    if typeof this is not 'function':
+        raise new TypeError('Function.prototype.partial - what is trying to be bound is not callable')
+    fn = this
+    return def(*args2):
+        return fn.apply(this, args.concat(args2))
 

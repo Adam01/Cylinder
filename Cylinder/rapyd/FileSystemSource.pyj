@@ -36,7 +36,7 @@ define(["Observable","utf8","PathUtil"], def(Observable, utf8, PathUtil):
         def moveEntity(self, path, newPath, cb=None):
             self.connection.sendCommand(self.CMD_MOVEENTITY,
                                         {source: path, target: newPath},
-                                        self.onMovedEntity.bind(self,cb))
+                                        self.onMovedEntity.partial(cb))
 
         def renameEntity(self, path, newName, cb=None):
             parentDir = PathUtil.explode(path)
@@ -53,7 +53,7 @@ define(["Observable","utf8","PathUtil"], def(Observable, utf8, PathUtil):
         def getPathSeparator(self,cb):
             self.connection.sendCommand(self.CMD_GETPATHSEP,
                                         {},
-                                        self.onPathSep.bind(self, cb))
+                                        self.onPathSep.partial(cb))
 
         def onDirectoryListing(self, cb, response):
             if response.status != "Completed" or response.result is False:
@@ -66,7 +66,7 @@ define(["Observable","utf8","PathUtil"], def(Observable, utf8, PathUtil):
                     cb(path, list)
 
         def fetchDirectory(self, path, cb=None):
-            self.connection.sendCommand(self.CMD_LISTDIR, {path: path}, self.onDirectoryListing.bind(self,cb))
+            self.connection.sendCommand(self.CMD_LISTDIR, {path: path}, self.onDirectoryListing.partial(cb))
 
         def onFileContents(self, cb, response):
             if response.status != "Completed" or response.result is False:
@@ -90,10 +90,10 @@ define(["Observable","utf8","PathUtil"], def(Observable, utf8, PathUtil):
                 cb(response.data.path, result)
 
         def setFileContents(self, path, data, cb=None):
-            self.connection.sendCommand(self.CMD_SETCONTENTS, {path: path, data: utf8.encode(data)}, self.onSetFileContents.bind(self,cb))
+            self.connection.sendCommand(self.CMD_SETCONTENTS, {path: path, data: utf8.encode(data)}, self.onSetFileContents.partial(cb))
 
         def fetchFileContents(self, path, cb=None):
-            self.connection.sendCommand(self.CMD_FETCHCONTENTS, {path: path}, self.onFileContents.bind(self, cb))
+            self.connection.sendCommand(self.CMD_FETCHCONTENTS, {path: path}, self.onFileContents.partial(cb))
 
     return FileSystemSource
 )

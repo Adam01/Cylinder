@@ -24,7 +24,7 @@ for root, dirs, files in os.walk("rapyd"):
             outfile = os.path.abspath( os.path.join(outdir, file[:-4]+".js") )
 
             if not os.path.exists(outfile) or os.path.getmtime(outfile) < os.path.getmtime(infile):
-                cmd = 'rapydscript -p --screw-ie8 "%s" -o "%s"' % (infile, outfile)
+                cmd = 'rapydscript -pib --screw-ie8 "%s" -o "%s"' % (infile, outfile)
         elif file.lower().endswith(".scss"):
             infile = os.path.abspath( os.path.join(root, file) )
             outfile = os.path.abspath( os.path.join(outdir, file[:-5]+".css") )

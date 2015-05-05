@@ -154,7 +154,7 @@ def main(Widget, DirectoryListRow, ContextMenu, PathUtil):
             return selected
 
         def fetchDir(self, path):
-            self.fs.fetchDirectory(path, self.onListDir.bind(self))
+            self.fs.fetchDirectory(path, self.onListDir)
 
         def getPath(self):
             return self.path
@@ -182,7 +182,7 @@ def main(Widget, DirectoryListRow, ContextMenu, PathUtil):
         def onFieldChange(self,row, field, name, value):
             console.log(field, name, value)
             if name == "title":
-                self.fs.renameEntity(row.item.path, value, self.__onRenameResponse.bind(self, row, field))
+                self.fs.renameEntity(row.item.path, value, self.__onRenameResponse.partial( row, field))
 
         def clear(self):
             self.__detachHelpers()

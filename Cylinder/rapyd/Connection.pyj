@@ -71,7 +71,7 @@ define(["BoundObserver"], def(Observable):
                 self.notify(self.DISCONNECT, address)
 
 
-            self.socket.onmessage = self.onLoginReply.bind(self)
+            self.socket.onmessage = self.onLoginReply
 
 
     return Connection

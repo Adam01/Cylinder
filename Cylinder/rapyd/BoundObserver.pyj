@@ -37,7 +37,7 @@ define(["Observable"], def(Observable):
 
         def __addSubscriber(self, subject, name, callback, boundArgs):
             if boundArgs.length:
-                callback = callback.bind(self, *boundArgs)
+                callback = callback.bind(undefined, *boundArgs)
 
             if subject not in self.__subscribedTo:
                 subject.subscribe(self.__REMOVE, self, def(obj,fn,name):

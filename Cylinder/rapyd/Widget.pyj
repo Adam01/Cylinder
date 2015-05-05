@@ -84,7 +84,7 @@ define(["BoundObserver"], def(BoundObserver):
             self.$element = None
             self.parent = parentWidget
 
-            onLoadedHTML = self.notify.bind(self, self.LOADED_HTML, self)
+            onLoadedHTML = self.notify.partial(self.LOADED_HTML, self)
 
             if sourceName is not None:
                 widgetPathName = GetWidgetPath(sourceName) + sourceName
